@@ -75,6 +75,33 @@ def create_dataset(file, word_to_idx):
     return x
 
 
+def load_continuation(file, word_to_idx, non_val=-1, cont_dim=20):
+    sentences = []
+    with open(file, "r") as f:
+        for line in f.readlines():
+            line = ["<bos>"] + line.strip().split(" ")
+            sentences.append(line)
+
+    x_cont = np.empty(shape=(len(sentences), cont_dim + 1), dtype=np.int32)
+
+    for idx_sent, sent in enumerate(sentences):
+        token_ids = []
+        for idx in range(cont_dim + 1):
+            if idx < len(sent):
+                if sent[idx] in word_to_idx:
+                    token_id = word_to_idx[sent[idx]]
+                else:
+                    token_id = word_to_idx["<unk>"]
+            else:
+                token_id = non_val
+
+            token_ids.append(token_id)
+
+        x_cont[idx_sent, :] = token_ids
+
+    return x_cont
+
+
 class Timer(object):
     def __init__(self, name=None):
         self.name = name

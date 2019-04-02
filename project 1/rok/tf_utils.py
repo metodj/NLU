@@ -8,6 +8,12 @@ def parse_ids_file(line):
     return input_seq, output_seq
 
 
+def parse_cont_ids_file(line):
+    line_split = tf.string_split([line])
+    input_seq = tf.string_to_number(line_split.values, out_type=tf.int32)
+    return input_seq
+
+
 def variable_summaries(var):
     mean = tf.reduce_mean(var)
     tf.summary.scalar('mean', mean)
