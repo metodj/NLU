@@ -34,6 +34,21 @@ def trainable_parameters():
             v_count *= d.value
         tot_count += v_count
 
-        print("{:<30}{:<10}".format(var.name, str(var.get_shape())))
+        print("{:<35}:{:<10}".format(var.name, str(var.get_shape())))
 
-    print("{:<30}{:<10}".format("num_parameters", tot_count))
+    print("{:<35}:{:<10}".format("num_parameters", tot_count))
+
+
+def print_flags(flags):
+    print("Command-line Arguments:")
+    for key in flags.flag_values_dict():
+        if key.upper() != "F":
+            print("{:<35}: {}".format(key.upper(), flags[key].value))
+    print("\n")
+
+
+def delete_flags(flags):
+    flags_dict = flags._flags()
+    keys_list = [keys for keys in flags_dict]
+    for keys in keys_list:
+        flags.__delattr__(keys)
