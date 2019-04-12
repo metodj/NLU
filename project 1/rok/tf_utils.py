@@ -14,37 +14,42 @@ def parse_cont_ids_file(line):
     return input_seq
 
 
-def variable_summaries(var):
-    mean = tf.reduce_mean(var)
-    tf.summary.scalar('mean', mean)
-    with tf.name_scope('stddev'):
-        stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-    tf.summary.scalar('stddev', stddev)
-    tf.summary.scalar('max', tf.reduce_max(var))
-    tf.summary.scalar('min', tf.reduce_min(var))
-    tf.summary.histogram('histogram', var)
-
-
-def trainable_parameters():
+def trainable_parameters(*args):
     tot_count = 0
 
-    for var in tf.trainable_variables():
-        v_count = 1
-        for d in var.get_shape():
-            v_count *= d.value
-        tot_count += v_count
+    if len(args) == 1:
+        logger = args[0]
+        for var in tf.trainable_variables():
+            v_count = 1
+            for d in var.get_shape():
+                v_count *= d.value
+            tot_count += v_count
+            logger.append(var.name, str(var.get_shape()))
 
-        print("{:<35}:{:<10}".format(var.name, str(var.get_shape())))
+        logger.append("num_parameters", tot_count)
+    else:
+        for var in tf.trainable_variables():
+            v_count = 1
+            for d in var.get_shape():
+                v_count *= d.value
+            tot_count += v_count
+            print("{:<35}:{:<10}".format(var.name, str(var.get_shape())))
 
-    print("{:<35}:{:<10}".format("num_parameters", tot_count))
+        print("{:<35}:{:<10}\n".format("num_parameters", tot_count))
 
 
-def print_flags(flags):
-    print("Command-line Arguments:")
-    for key in flags.flag_values_dict():
-        if key.upper() != "F":
-            print("{:<35}: {}".format(key.upper(), flags[key].value))
-    print("\n")
+def print_flags(flags, *args):
+    if len(args) == 1:
+        logger = args[0]
+        for key in flags.flag_values_dict():
+            if key.upper() != "F":
+                logger.append(key.upper(), flags[key].value)
+    else:
+        print("Command-line Arguments")
+        for key in flags.flag_values_dict():
+            if key.upper() != "F":
+                print("{:<35}: {}".format(key.upper(), flags[key].value))
+        print("\n")
 
 
 def delete_flags(flags):

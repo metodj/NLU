@@ -115,18 +115,23 @@ class Timer(object):
 
 class Logger(object):
     def __init__(self, log_dir):
-        self.name = log_dir + "log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        # logging.basicConfig(filename=self.name, filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
+        dt = datetime.now()
+        self.name = log_dir + "log_" + dt.strftime("%Y-%m-%d_%H-%M-%S")
+        logging.basicConfig(filename=self.name, filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
 
     @staticmethod
     def append(x, *args):
-        # logging.info(str(x))
         if len(args) == 1:
-            print("{:<40}{:<15}".format(x, str(args[0])))
+            s = "{:<40}{:<15}".format(x, str(args[0]))
         elif len(args) == 2:
-            print("{:<40}{:<15}{:<15}".format(x, str(args[0]), str(args[1])))
+            s = "{:<40}{:<15}{:<15}".format(x, str(args[0]), str(args[1]))
+        elif len(args) == 3:
+            s = "{:<40}{:<15}{:<15}{:<15}".format(x, str(args[0]), str(args[1]), str(args[2]))
         else:
-            print("{:<40}".format(x))
+            s = "{:<40}".format(x)
+
+        logging.info(s)
+        print(s)
 
     @staticmethod
     def create_log():

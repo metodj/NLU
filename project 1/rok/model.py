@@ -136,17 +136,20 @@ class Model:
                                                                             name="softmax_loss")  # 64x1
                     losses.append(loss_t)
 
-            # LOSS
-            with tf.name_scope("loss"):
-                losses = tf.stack(losses)  # 29x64
-                loss = tf.reduce_mean(tf.reduce_sum(losses, axis=0), name="mean_loss")  # 64x1 -> 1x1
+        # LOSS
+        with tf.name_scope("loss"):
+            sentence_mask_x = 1.0 - tf.cast(tf.equal(x, self.pad_idx), dtype=tf.float32)
+
+            losses = tf.transpose(tf.stack(losses))  # 64x29
+            losses = tf.multiply(losses, sentence_mask_x, name="masking") # 64x29, without <pad>
+            loss = tf.reduce_mean(tf.reduce_sum(losses, axis=1), name="mean_loss")  # 64x1 -> 1x1
 
         # PERPLEXITY
         with tf.name_scope("perplexity"):
-            sentence_mask = 1.0 - tf.cast(tf.equal(x, self.pad_idx), dtype=tf.float32)
+            sentence_mask_y = 1.0 - tf.cast(tf.equal(y, self.pad_idx), dtype=tf.float32)
 
-            neg_log_prob = tf.multiply(tf.transpose(losses), sentence_mask, name="masking")  # 64x29, without <pad>
-            sent_length = tf.reduce_sum(sentence_mask, axis=1)  # 64x1, sentence length with <bos> and <eos>
+            neg_log_prob = tf.multiply(losses, sentence_mask_y, name="masking")  # 64x29, without <pad>
+            sent_length = tf.reduce_sum(sentence_mask_y, axis=1)  # 64x1, sentence length with <bos> and <eos>
             sum_neg_log_prob = tf.reduce_sum(neg_log_prob, axis=1,
                                              name="perplexity_exponent_sum")  # 64x1, sum of negative log probabilities
 
@@ -189,8 +192,7 @@ class Model:
                         cond = tf.less_equal(t + 1, sentence_length)
                         x_t_embedded = tf.keras.backend.switch(cond,
                                                   tf.nn.embedding_lookup(self.embedding_weight, x_t),
-                                                  tf.nn.embedding_lookup(self.embedding_weight, prediction),
-                                                               name="embedding_lookup")  # 64x100
+                                                  tf.nn.embedding_lookup(self.embedding_weight, prediction))  # 64x100
                     else:
                         x_t_embedded = tf.nn.embedding_lookup(self.embedding_weight, x[:, t])
 
@@ -208,7 +210,7 @@ class Model:
 
                 with tf.name_scope("prediction"):
                     cond = tf.less_equal(t + 1, sentence_length)
-                    output = tf.keras.backend.switch(cond, x_t, tf.cast(prediction, dtype=tf.int32), name="continuation")
+                    output = tf.keras.backend.switch(cond, x_t, tf.cast(prediction, dtype=tf.int32))
                     predictions.append(output)
 
         predictions = tf.transpose(tf.stack(predictions))  # 20x64 -> 64x20
