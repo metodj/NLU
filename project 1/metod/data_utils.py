@@ -106,19 +106,10 @@ def variable_summaries(var):
     tf.summary.histogram('histogram', var)
 
 
-# names = ['train.ids', 'eval.ids', 'test.ids']
-
-
-# if __name__ == "__main__":
-#     word_to_id_dict = build_vocab()
-# 
-#     i = 0
-#     for file in os.listdir():
-#         filename = os.fsdecode(file)
-#         if 'sentences' in filename:
-#            word_to_ids(filename, names[i], word_to_id_dict)
-#            i += 1
-
+#word_to_id_dict = build_vocab()
+#word_to_ids(FILE_TRAIN, INPUT_TRAIN, word_to_id_dict)
+#word_to_ids(FILE_EVAL, INPUT_EVAL, word_to_id_dict)
+#word_to_ids(FILE_TEST, INPUT_TEST, word_to_id_dict)
 
 
 
