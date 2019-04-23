@@ -78,7 +78,7 @@ class Model:
                                                      initializer=self.initializer, trainable=True)  # 512x20000
 
                 self.embedding_weight = tf.Variable(np.empty((self.vocabulary_size, self.embedding_dim), dtype=np.float32),
-                                                    trainable=False)  # 20000x100
+                                                    trainable=True)  # 20000x100
             elif self.experiment == "C":
                 self.output_weight = tf.get_variable("output_weight", shape=[self.down_state_dim, self.vocabulary_size],
                                                      initializer=self.initializer, trainable=True)  # 512x20000
