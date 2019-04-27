@@ -254,7 +254,7 @@ with tf.Session() as session:
                     except:
                         eos_pos = 20
 
-                    gen_sent = " ".join([idx_to_word[token_id] if idx < eos_pos else "" for idx, token_id in
+                    gen_sent = " ".join([idx_to_word[token_id] if idx <= eos_pos else "" for idx, token_id in
                                          enumerate(continuation_ids[i, 1:].tolist())])
                     f.write(gen_sent + "\n")
         logger.append("GENERATION FINISHED.\n")
