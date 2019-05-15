@@ -8,74 +8,54 @@ import collections
 import json
 import re
 import os
-import warnings
 
-from bert import modeling, tokenization
+from bert_utils import *
 
 import tensorflow as tf
 
 
-warnings.simplefilter("ignore")
 tf.logging.set_verbosity(tf.logging.ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "2"
 
 flags = tf.flags
 
 FLAGS = flags.FLAGS
 
+# I/O
 flags.DEFINE_string("input_file", None, "")
-
 flags.DEFINE_string("output_file", None, "")
-
 flags.DEFINE_string("layers", "-1,-2,-3,-4", "")
 
-flags.DEFINE_string(
-    "bert_config_file", None,
-    "The config json file corresponding to the pre-trained BERT model. "
-    "This specifies the model architecture.")
+# TPU
+flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
+flags.DEFINE_string("master", None, "If using a TPU, the address of the master.")
+flags.DEFINE_integer("num_tpu_cores", 8, "Only used if `use_tpu` is True. Total number of TPU cores to use.")
+flags.DEFINE_bool("use_one_hot_embeddings", False, "tf.one_hot or tf.nn.embedding_lookup. TPU -> True.")
 
-flags.DEFINE_integer(
-    "max_seq_length", 128,
-    "The maximum total input sequence length after WordPiece tokenization. "
-    "Sequences longer than this will be truncated, and sequences shorter "
-    "than this will be padded.")
+# BERT
+flags.DEFINE_string("bert_config_file", None, "The config json file corresponding to the pre-trained BERT model.")
+flags.DEFINE_string("init_checkpoint", None, "Initial checkpoint (usually from a pre-trained BERT model).")
+flags.DEFINE_string("vocab_file", None, "The vocabulary file that the BERT model was trained on.")
+flags.DEFINE_bool("do_lower_case", True, "Whether to lower case the input text. Uncased -> True. Cased -> False.")
 
-flags.DEFINE_string(
-    "init_checkpoint", None,
-    "Initial checkpoint (usually from a pre-trained BERT model).")
-
-flags.DEFINE_string("vocab_file", None,
-                    "The vocabulary file that the BERT model was trained on.")
-
-flags.DEFINE_bool(
-    "do_lower_case", True,
-    "Whether to lower case the input text. Should be True for uncased "
-    "models and False for cased models.")
-
+# Architecture and parameters
+flags.DEFINE_integer("max_seq_length", 128, "Max. length after tokenization. If shorter padded, else truncated.")
 flags.DEFINE_integer("batch_size", 32, "Batch size for predictions.")
 
-flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
 
-flags.DEFINE_string("master", None,
-                    "If using a TPU, the address of the master.")
-
-flags.DEFINE_integer(
-    "num_tpu_cores", 8,
-    "Only used if `use_tpu` is True. Total number of TPU cores to use.")
-
-flags.DEFINE_bool(
-    "use_one_hot_embeddings", False,
-    "If True, tf.one_hot will be used for embedding lookups, otherwise "
-    "tf.nn.embedding_lookup will be used. On TPUs, this should be True "
-    "since it is much faster.")
+import tensorflow as tf
+import re
+from bert import modeling, tokenization
 
 
 class InputExample(object):
+    """Input example wrapper."""
 
-    def __init__(self, unique_id, text_a, text_b):
+    def __init__(self, unique_id, text_a, text_b=None, label=None):
         self.unique_id = unique_id
         self.text_a = text_a
         self.text_b = text_b
+        self.label = label
 
 
 class InputFeatures(object):
@@ -87,6 +67,9 @@ class InputFeatures(object):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.input_type_ids = input_type_ids
+        # self.segment_ids = segment_ids
+        # self.label_id = label_id
+        # self.is_real_example = is_real_example
 
 
 def input_fn_builder(features, seq_length):
@@ -175,14 +158,6 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
         else:
             tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
-        tf.logging.info("**** Trainable Variables ****")
-        for var in tvars:
-            init_string = ""
-            if var.name in initialized_variable_names:
-                init_string = ", *INIT_FROM_CKPT*"
-            tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
-                            init_string)
-
         all_layers = model.get_all_encoder_layers()
 
         predictions = {
@@ -211,33 +186,11 @@ def convert_examples_to_features(examples, seq_length, tokenizer):
             tokens_b = tokenizer.tokenize(example.text_b)
 
         if tokens_b:
-            # Modifies `tokens_a` and `tokens_b` in place so that the total
-            # length is less than the specified length.
-            # Account for [CLS], [SEP], [SEP] with "- 3"
             _truncate_seq_pair(tokens_a, tokens_b, seq_length - 3)
         else:
-            # Account for [CLS] and [SEP] with "- 2"
             if len(tokens_a) > seq_length - 2:
                 tokens_a = tokens_a[0:(seq_length - 2)]
 
-        # The convention in BERT is:
-        # (a) For sequence pairs:
-        #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]
-        #  type_ids: 0     0  0    0    0     0       0 0     1  1  1  1   1 1
-        # (b) For single sequences:
-        #  tokens:   [CLS] the dog is hairy . [SEP]
-        #  type_ids: 0     0   0   0  0     0 0
-        #
-        # Where "type_ids" are used to indicate whether this is the first
-        # sequence or the second sequence. The embedding vectors for `type=0` and
-        # `type=1` were learned during pre-training and are added to the wordpiece
-        # embedding vector (and position vector). This is not *strictly* necessary
-        # since the [SEP] token unambiguously separates the sequences, but it makes
-        # it easier for the model to learn the concept of sequences.
-        #
-        # For classification tasks, the first vector (corresponding to [CLS]) is
-        # used as as the "sentence vector". Note that this only makes sense because
-        # the entire model is fine-tuned.
         tokens = []
         input_type_ids = []
         tokens.append("[CLS]")
@@ -257,8 +210,7 @@ def convert_examples_to_features(examples, seq_length, tokenizer):
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
 
-        # The mask has 1 for real tokens and 0 for padding tokens. Only real
-        # tokens are attended to.
+        # The mask has 1 for real tokens and 0 for padding tokens. Only real tokens are attended to.
         input_mask = [1] * len(input_ids)
 
         # Zero-pad up to the sequence length.
@@ -271,7 +223,7 @@ def convert_examples_to_features(examples, seq_length, tokenizer):
         assert len(input_mask) == seq_length
         assert len(input_type_ids) == seq_length
 
-        if ex_index < 5:
+        if ex_index < 1:
             tf.logging.info("*** Example ***")
             tf.logging.info("unique_id: %s" % example.unique_id)
             tf.logging.info("tokens: %s" % " ".join(
@@ -293,11 +245,6 @@ def convert_examples_to_features(examples, seq_length, tokenizer):
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
-
-    # This is a simple heuristic which will always truncate the longer sequence
-    # one token at a time. This makes more sense than truncating an equal percent
-    # of tokens from each, since if one sequence is very short then each token
-    # that's truncated likely contains more information than a longer sequence.
     while True:
         total_length = len(tokens_a) + len(tokens_b)
         if total_length <= max_length:
@@ -329,26 +276,25 @@ def read_examples(input_file):
             examples.append(
                 InputExample(unique_id=unique_id, text_a=text_a, text_b=text_b))
             unique_id += 1
+
     return examples
 
 
 def main(_):
-    tf.logging.set_verbosity(tf.logging.INFO)
-
     layer_indexes = [int(x) for x in FLAGS.layers.split(",")]
 
+    # BERT config and tokenizer
     bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+    tokenizer = tokenization.FullTokenizer(vocab_file=FLAGS.vocab_file,
+                                           do_lower_case=FLAGS.do_lower_case)
 
-    tokenizer = tokenization.FullTokenizer(
-        vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
-
+    # TPU compatibility
     is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
-    run_config = tf.contrib.tpu.RunConfig(
-        master=FLAGS.master,
-        tpu_config=tf.contrib.tpu.TPUConfig(
-            num_shards=FLAGS.num_tpu_cores,
-            per_host_input_for_training=is_per_host))
+    run_config = tf.contrib.tpu.RunConfig(master=FLAGS.master,
+                                          tpu_config=tf.contrib.tpu.TPUConfig(num_shards=FLAGS.num_tpu_cores,
+                                                                              per_host_input_for_training=is_per_host))
 
+    #
     examples = read_examples(FLAGS.input_file)
 
     features = convert_examples_to_features(
