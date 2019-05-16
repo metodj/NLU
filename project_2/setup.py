@@ -14,6 +14,6 @@ setup(
                 'tensorflow-gpu==1.12.0',
                 'numpy',
                 'pandas',
-                'bert-tensorflow=1.0.1',
+                'bert-tensorflow==1.0.1',
         ],
 )
