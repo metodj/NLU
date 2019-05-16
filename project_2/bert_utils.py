@@ -312,12 +312,18 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
 
     hidden_size = output_layer.shape[-1].value
 
+    print("output_layer", output_layer.get_shape())
+    print("hidden_size", hidden_size)
+
     output_weights = tf.get_variable(
         "output_weights", [num_labels, hidden_size],
         initializer=tf.truncated_normal_initializer(stddev=0.02))
 
     output_bias = tf.get_variable(
         "output_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    print("output_weights", output_weights.get_shape())
+    print("output_bias", output_bias.get_shape())
 
     with tf.variable_scope("loss"):
         if is_training:

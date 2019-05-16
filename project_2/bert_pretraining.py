@@ -33,7 +33,7 @@ flags.DEFINE_integer("train_batch_size", 8, "Total batch size for training.")
 flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
 flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
-flags.DEFINE_float("num_train_epochs", 0.01, "Total number of training epochs to perform.")
+flags.DEFINE_float("num_train_epochs", 0.1, "Total number of training epochs to perform.")
 flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
 flags.DEFINE_integer("save_checkpoints_steps", 10, "How often to save the model checkpoint.")
 flags.DEFINE_integer("iterations_per_loop", 1, "How many steps to make in each estimator call.")
@@ -108,6 +108,8 @@ def main(_):
         train_examples = processor.get_train_examples(FLAGS.data_dir)
         num_train_steps = int(len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
         num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
+
+    print("num_train_steps", num_train_steps)
 
     model_fn = model_fn_builder(
         bert_config=bert_config,
