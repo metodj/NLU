@@ -1,5 +1,4 @@
-# data preprocessing for BERT colab tutorial: https://colab.research.google.com/github/google-research/bert/blob/master/predicting_movie_reviews_with_bert_on_tf_hub.ipynb
-
+# colab notebook can be found here: https://colab.research.google.com/drive/1Sl5wXmufsJi7DG9eWS75pthjUB8N_oi5
 import pandas as pd
 
 def data_to_bert_tutorial(data_path):
