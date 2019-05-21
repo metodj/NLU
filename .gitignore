@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs
+/project_2/bert_cloze/.vs/bert-master/v16
+/project_2/commonsense/__pycache__
+/project_2/commonsense/commonsense.pyproj.user
