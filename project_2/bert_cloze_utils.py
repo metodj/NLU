@@ -2,6 +2,7 @@ import tensorflow as tf
 import csv
 import os
 import collections
+import numpy as np
 from bert import modeling, tokenization, optimization
 
 
@@ -10,7 +11,8 @@ from bert import modeling, tokenization, optimization
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
-    def __init__(self, guid, text_a, text_b=None, label=None):
+    def __init__(self, guid, text_a, text_b=None, label=None,
+                 vs_sent1=None, vs_sent2=None, vs_sent3=None, vs_sent4=None, vs_sent5=None):
         """Constructs a InputExample.
         Args:
           guid: Unique id for the example.
@@ -25,6 +27,11 @@ class InputExample(object):
         self.text_a = text_a
         self.text_b = text_b
         self.label = label
+        self.vs_sent1 = vs_sent1
+        self.vs_sent2 = vs_sent2
+        self.vs_sent3 = vs_sent3
+        self.vs_sent4 = vs_sent4
+        self.vs_sent5 = vs_sent5
 
 
 class PaddingInputExample(object):
@@ -43,11 +50,12 @@ class PaddingInputExample(object):
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, is_real_example=True):
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, sentiment, is_real_example=True):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_id = label_id
+        self.sentiment = sentiment
         self.is_real_example = is_real_example
 
 
@@ -82,6 +90,10 @@ class DataProcessor(object):
                 lines.append(line)
             return lines
 
+    @classmethod
+    def _string_to_array(cls, string):
+        raise NotImplementedError()
+
 
 class SctProcessor(DataProcessor):
 
@@ -96,9 +108,16 @@ class SctProcessor(DataProcessor):
             text_a = tokenization.convert_to_unicode(line[2])
             text_b = tokenization.convert_to_unicode(line[3])
             label = tokenization.convert_to_unicode(line[1])
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
 
-        print(examples[0].guid, examples[0].text_a, examples[0].text_b, examples[0].label)
+            vs_sent1 = self._string_to_array(line[4][1:-1])
+            vs_sent2 = self._string_to_array(line[5][1:-1])
+            vs_sent3 = self._string_to_array(line[6][1:-1])
+            vs_sent4 = self._string_to_array(line[7][1:-1])
+            vs_sent5 = self._string_to_array(line[8][1:-1])
+
+            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
+
         return examples
 
     def get_dev_examples(self, data_dir):
@@ -112,7 +131,15 @@ class SctProcessor(DataProcessor):
             text_a = tokenization.convert_to_unicode(line[2])
             text_b = tokenization.convert_to_unicode(line[3])
             label = tokenization.convert_to_unicode(line[1])
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+
+            vs_sent1 = self._string_to_array(line[4][1:-1])
+            vs_sent2 = self._string_to_array(line[5][1:-1])
+            vs_sent3 = self._string_to_array(line[6][1:-1])
+            vs_sent4 = self._string_to_array(line[7][1:-1])
+            vs_sent5 = self._string_to_array(line[8][1:-1])
+
+            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
         return examples
 
     def get_labels(self):
@@ -127,10 +154,23 @@ class SctProcessor(DataProcessor):
             if i == 0:
                 continue
             guid = "test-%s" % (line[0])
-            text_a = tokenization.convert_to_unicode(line[1])
-            text_b = tokenization.convert_to_unicode(line[2])
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=None))
+            text_a = tokenization.convert_to_unicode(line[2])
+            text_b = tokenization.convert_to_unicode(line[3])
+            label = tokenization.convert_to_unicode(line[1])
+
+            vs_sent1 = self._string_to_array(line[4][1:-1])
+            vs_sent2 = self._string_to_array(line[5][1:-1])
+            vs_sent3 = self._string_to_array(line[6][1:-1])
+            vs_sent4 = self._string_to_array(line[7][1:-1])
+            vs_sent5 = self._string_to_array(line[8][1:-1])
+
+            examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
         return examples
+
+    @classmethod
+    def _string_to_array(cls, string):
+        return np.array(list(map(float, string.strip().split())), dtype=np.float)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -142,6 +182,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
                              input_mask=[0] * max_seq_length,
                              segment_ids=[0] * max_seq_length,
                              label_id=0,
+                             sentiment=np.zeros(shape=(5, 4), dtype=np.float32),
                              is_real_example=False)
 
     label_map = {}
@@ -193,17 +234,29 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     assert len(segment_ids) == max_seq_length
 
     label_id = label_map[example.label]
-    if ex_index < 1:
+
+    # Sentiment
+    sentiment = np.zeros(shape=(5, 4))
+    sentiment[0, :] = example.vs_sent1
+    sentiment[1, :] = example.vs_sent2
+    sentiment[2, :] = example.vs_sent3
+    sentiment[3, :] = example.vs_sent4
+    sentiment[4, :] = example.vs_sent5
+
+    sentiment = np.reshape(sentiment, newshape=(-1,))
+
+    if ex_index < 2:
         tf.logging.info("*** Example ***")
-        tf.logging.info("guid: %s" % (example.guid))
+        tf.logging.info("unique_id: %s" % example.guid)
         tf.logging.info("tokens: %s" % " ".join([tokenization.printable_text(x) for x in tokens]))
         tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
         tf.logging.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
         tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
         tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
+        tf.logging.info("sentiment: %s, %s" % (str(sentiment.shape), str(sentiment)))
 
     feature = InputFeatures(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids, label_id=label_id,
-                            is_real_example=True)
+                            sentiment=sentiment, is_real_example=True)
 
     return feature
 
@@ -224,12 +277,17 @@ def file_based_convert_examples_to_features(examples, label_list, max_seq_length
             f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
             return f
 
+        def create_tensor_feature(values):
+            f = tf.train.Feature(float_list=tf.train.FloatList(value=values))
+            return f
+
         features = collections.OrderedDict()
         features["input_ids"] = create_int_feature(feature.input_ids)
         features["input_mask"] = create_int_feature(feature.input_mask)
         features["segment_ids"] = create_int_feature(feature.segment_ids)
         features["label_ids"] = create_int_feature([feature.label_id])
         features["is_real_example"] = create_int_feature([int(feature.is_real_example)])
+        features["sentiment_array"] = create_tensor_feature(feature.sentiment)
 
         tf_example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())
@@ -245,6 +303,7 @@ def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remain
         "segment_ids": tf.FixedLenFeature([seq_length], tf.int64),
         "label_ids": tf.FixedLenFeature([], tf.int64),
         "is_real_example": tf.FixedLenFeature([], tf.int64),
+        "sentiment_array": tf.FixedLenFeature([5, 4], tf.float32),
     }
 
     def _decode_record(record, name_to_features):
@@ -298,7 +357,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 # -------------------------------------------------------------------------------------------------------------------- #
 # Model loaders
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
-                 labels, num_labels, use_one_hot_embeddings):
+                 labels, sentiment_array, num_labels, use_one_hot_embeddings):
     """Creates a classification model."""
 
     # Narrative
@@ -312,6 +371,19 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
 
     output_layer = model.get_pooled_output()
     hidden_size = output_layer.shape[-1].value
+    batch_size = 4
+    # batch_size = tf.shape(output_layer)[0]
+
+    # Sentiment
+    # rnn_cell = tf.nn.rnn_cell.LSTMCell(num_units=64, name="sentiment_rnn_cell",
+    #                                    initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    sentiment_weights = tf.get_variable(
+        "sentiment_weights", [4, 4],
+        initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    sentiment_bias = tf.get_variable(
+        "sentiment_bias", [4], initializer=tf.zeros_initializer())
 
     output_weights = tf.get_variable(
         "output_weights", [num_labels, hidden_size],
@@ -320,13 +392,25 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
     output_bias = tf.get_variable(
         "output_bias", [num_labels], initializer=tf.zeros_initializer())
 
-    print("output_weights", output_weights.get_shape())
-    print("output_bias", output_bias.get_shape())
-
     with tf.variable_scope("loss"):
         if is_training:
             # I.e., 0.1 dropout
             output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
+
+
+        sentiment_context = sentiment_array[:, 0, :]
+        sentiment_answer = sentiment_array[:, -1, :]
+
+        # initial_state = rnn_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
+        # _, (_, sentiment_hidden) = tf.nn.dynamic_rnn(cell=rnn_cell, inputs=sentiment_context,
+        #                                              initial_state=initial_state, dtype=tf.float32)
+
+        logits = tf.matmul(sentiment_context, sentiment_weights)
+        logits = tf.matmul(logits, sentiment_answer)
+        logits = tf.nn.bias_add(logits, sentiment_bias)
+        sentiment_probability = tf.nn.softmax(logits)
+
+        print("sentiment_probabiltiy", sentiment_probability.get_shape())
 
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
@@ -357,6 +441,8 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         input_mask = features["input_mask"]
         segment_ids = features["segment_ids"]
         label_ids = features["label_ids"]
+        sentiment_array = features["sentiment_array"]
+
         is_real_example = None
         if "is_real_example" in features:
             is_real_example = tf.cast(features["is_real_example"], dtype=tf.float32)
@@ -366,10 +452,16 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
         (total_loss, per_example_loss, logits, probabilities) = create_model(
-            bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
+            bert_config, is_training, input_ids, input_mask, segment_ids, label_ids, sentiment_array,
             num_labels, use_one_hot_embeddings)
 
         tvars = tf.trainable_variables()
+        tvars = [tvar for tvar in tvars if tvar.name not in ["loss/rnn/sentiment_rnn_cell/bias:0",
+                                                             "loss/rnn/sentiment_rnn_cell/kernel:0",
+                                                             "sentiment_weights:0",
+                                                             "sentiment_bias:0"
+                                                             ]]
+
         initialized_variable_names = {}
         scaffold_fn = None
         if init_checkpoint:

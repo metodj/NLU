@@ -1,22 +1,25 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import tensorflow as tf
 from bert import tokenization, modeling
 
-from bert_utils import SctProcessor, model_fn_builder, file_based_convert_examples_to_features
-from bert_utils import file_based_input_fn_builder, PaddingInputExample
+from bert_cloze_utils import SctProcessor, model_fn_builder, file_based_convert_examples_to_features
+from bert_cloze_utils import file_based_input_fn_builder, PaddingInputExample
 
 
 flags = tf.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("task_name", None, "The name of the task to train.")
 flags.DEFINE_string("data_dir", None, "The input data dir. Should contain the .tsv files (or other data files).")
 flags.DEFINE_string("output_dir", None, "The output directory where the model checkpoints will be written.")
 
 # BERT
-flags.DEFINE_string("bert_config_file", None, "The config json file corresponding to the pre-trained BERT model.")
-flags.DEFINE_string("init_checkpoint", None, "Initial checkpoint (usually from a pre-trained BERT model).")
-flags.DEFINE_string("vocab_file", None, "The vocabulary file that the BERT model was trained on.")
+flags.DEFINE_string("bert_config_file", "./bert/bert_config.json", "The config of pre-trained BERT model.")
+flags.DEFINE_string("init_checkpoint", "./bert/bert_model.ckpt", "Initial checkpoint of BERT.")
+flags.DEFINE_string("vocab_file", "./bert/vocab.txt", "The vocabulary file that the BERT model was trained on.")
 flags.DEFINE_bool("do_lower_case", True, "Whether to lower case the input text. Uncased -> True. Cased -> False.")
 
 # Training or evaluation
@@ -25,12 +28,12 @@ flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 flags.DEFINE_bool("do_predict", False, "Whether to run the model in inference mode on the test set.")
 
 flags.DEFINE_integer("max_seq_length", 128, "Max. length after tokenization. If shorter padded, else truncated.")
-flags.DEFINE_integer("train_batch_size", 8, "Total batch size for training.")
-flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
-flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
+flags.DEFINE_integer("train_batch_size", 4, "Total batch size for training.")
+flags.DEFINE_integer("eval_batch_size", 4, "Total batch size for eval.")
+flags.DEFINE_integer("predict_batch_size", 2, "Total batch size for predict.")
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
-flags.DEFINE_float("num_train_epochs", 0.1, "Total number of training epochs to perform.")
-flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
+flags.DEFINE_float("num_train_epochs", 0.01, "Total number of training epochs to perform.")
+flags.DEFINE_float("warmup_proportion", 0.01, "Proportion of training to perform linear learning rate warmup for.")
 flags.DEFINE_integer("save_checkpoints_steps", 1000, "How often to save the model checkpoint.")
 flags.DEFINE_integer("iterations_per_loop", 1, "How many steps to make in each estimator call.")
 
@@ -64,16 +67,8 @@ def main(_):
     tf.gfile.MakeDirs(FLAGS.output_dir)
 
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Tasks, Processor and Tokenizer
-    processors = {
-        "sct": SctProcessor
-    }
-
-    task_name = FLAGS.task_name.lower()
-    if task_name not in processors:
-        raise ValueError("Task not found: %s" % task_name)
-
-    processor = processors[task_name]()
+    # Processor
+    processor = SctProcessor()
     label_list = processor.get_labels()
     tokenizer = tokenization.FullTokenizer(vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
@@ -187,7 +182,7 @@ def main(_):
                 predict_examples.append(PaddingInputExample())
 
         predict_file = os.path.join(FLAGS.output_dir, "predict.tf_record")
-        file_based_convert_examples_to_features(predict_examples, label_list,
+        file_based_convert_examples_to_features(predict_examples, None,
                                                 FLAGS.max_seq_length, tokenizer,
                                                 predict_file)
 
@@ -224,8 +219,5 @@ def main(_):
 
 if __name__ == "__main__":
     flags.mark_flag_as_required("data_dir")
-    flags.mark_flag_as_required("task_name")
-    flags.mark_flag_as_required("vocab_file")
-    flags.mark_flag_as_required("bert_config_file")
     flags.mark_flag_as_required("output_dir")
     tf.app.run()

@@ -151,4 +151,3 @@ if __name__ == "__main__":
     print("train_len", df_train.apply(lambda row: len(row[idx]), axis=1).max())
     print("val_len", df_val.apply(lambda row: len(row[idx]), axis=1).max())
     print("test_len", df_test.apply(lambda row: len(row[1]), axis=1).max())
-

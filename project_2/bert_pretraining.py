@@ -28,13 +28,13 @@ flags.DEFINE_bool("do_train", False, "Whether to run training.")
 flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 flags.DEFINE_bool("do_predict", False, "Whether to run the model in inference mode on the test set.")
 
-flags.DEFINE_integer("max_seq_length", 128, "Max. length after tokenization. If shorter padded, else truncated.")
-flags.DEFINE_integer("train_batch_size", 8, "Total batch size for training.")
-flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
-flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
+flags.DEFINE_integer("max_seq_length", 32, "Max. length after tokenization. If shorter padded, else truncated.")
+flags.DEFINE_integer("train_batch_size", 4, "Total batch size for training.")
+flags.DEFINE_integer("eval_batch_size", 4, "Total batch size for eval.")
+flags.DEFINE_integer("predict_batch_size", 2, "Total batch size for predict.")
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
-flags.DEFINE_float("num_train_epochs", 0.1, "Total number of training epochs to perform.")
-flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
+flags.DEFINE_float("num_train_epochs", 0.01, "Total number of training epochs to perform.")
+flags.DEFINE_float("warmup_proportion", 0.01, "Proportion of training to perform linear learning rate warmup for.")
 flags.DEFINE_integer("save_checkpoints_steps", 1000, "How often to save the model checkpoint.")
 flags.DEFINE_integer("iterations_per_loop", 1, "How many steps to make in each estimator call.")
 
@@ -191,7 +191,7 @@ def main(_):
                 predict_examples.append(PaddingInputExample())
 
         predict_file = os.path.join(FLAGS.output_dir, "predict.tf_record")
-        file_based_convert_examples_to_features(predict_examples, label_list,
+        file_based_convert_examples_to_features(predict_examples, None,
                                                 FLAGS.max_seq_length, tokenizer,
                                                 predict_file)
 
