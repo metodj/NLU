@@ -185,7 +185,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 
 # This function is not used by this file but is still used by the Colab and
 # people who depend on it.
-def input_fn_builder(features, seq_length, is_training, drop_remainder):
+def input_fn_builder(features, seq_length, is_training, drop_remainder, sent_length=3):
   """Creates an `input_fn` closure to be passed to TPUEstimator."""
 
   all_input_ids = []
@@ -230,9 +230,9 @@ def input_fn_builder(features, seq_length, is_training, drop_remainder):
         "label_ids":
             tf.constant(all_label_ids, shape=[num_examples], dtype=tf.int32),
         "sent_e":
-            tf.constant(all_sent_e, shape=[num_examples,3], dtype=tf.int32),
+            tf.constant(all_sent_e, shape=[num_examples, sent_length], dtype=tf.float32),
         "sent_p":
-            tf.constant(all_sent_p, shape=[num_examples,3], dtype=tf.int32)
+            tf.constant(all_sent_p, shape=[num_examples, sent_length], dtype=tf.float32)
     })
 
     if is_training:
