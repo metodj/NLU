@@ -33,7 +33,7 @@ class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
     def __init__(self, guid, text_a, text_b=None, label=None,
-                 vs_sent1=None, vs_sent2=None, vs_sent3=None, vs_sent4=None, vs_sent5=None):
+                 vs_sent1=None, vs_sent2=None, vs_sent3=None, vs_sent4=None, vs_sent5=None, cs_dist=None):
         """Constructs a InputExample.
         Args:
           guid: Unique id for the example.
@@ -53,17 +53,19 @@ class InputExample(object):
         self.vs_sent3 = vs_sent3
         self.vs_sent4 = vs_sent4
         self.vs_sent5 = vs_sent5
+        self.cs_dist = cs_dist
 
 
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, sentiment, is_real_example=True):
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, sentiment, cs_dist,is_real_example=True):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_id = label_id
         self.sentiment = sentiment
+        self.cs_dist = cs_dist
         self.is_real_example = is_real_example
 
 
@@ -123,8 +125,11 @@ class SctProcessor(DataProcessor):
             vs_sent4 = self._string_to_array(line[7][1:-1])
             vs_sent5 = self._string_to_array(line[8][1:-1])
 
+            cs_dist = self._string_to_array(line[9][1:-1])
+
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
-                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5,
+                                         cs_dist=cs_dist))
 
         return examples
 
@@ -146,8 +151,11 @@ class SctProcessor(DataProcessor):
             vs_sent4 = self._string_to_array(line[7][1:-1])
             vs_sent5 = self._string_to_array(line[8][1:-1])
 
+            cs_dist = self._string_to_array(line[9][1:-1])
+
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
-                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5,
+                                         cs_dist=cs_dist))
         return examples
 
     def get_labels(self):
@@ -173,8 +181,11 @@ class SctProcessor(DataProcessor):
             vs_sent4 = self._string_to_array(line[7][1:-1])
             vs_sent5 = self._string_to_array(line[8][1:-1])
 
+            cs_dist = self._string_to_array(line[9][1:-1])
+
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, vs_sent1=vs_sent1,
-                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5))
+                                         vs_sent2=vs_sent2, vs_sent3=vs_sent3, vs_sent4=vs_sent4, vs_sent5=vs_sent5,
+                                         cs_dist=cs_dist))
         return examples
 
     @classmethod
@@ -246,6 +257,9 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
 
     sentiment = np.reshape(sentiment, newshape=(-1,))
 
+    # Common Sense Distances
+    cs_dist = example.cs_dist
+
     if ex_index < 1:
         tf.logging.info("*** Example ***")
         tf.logging.info("unique_id: %s" % example.guid)
@@ -255,9 +269,10 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
         tf.logging.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
         tf.logging.info("label: %s (id = %d)" % (example.label, label_id))
         tf.logging.info("sentiment: %s, %s" % (str(sentiment.shape), str(sentiment)))
+        tf.logging.info("cs_dist: %s, %s" % (str(cs_dist.shape), str(cs_dist)))
 
     feature = InputFeatures(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids, label_id=label_id,
-                            sentiment=sentiment, is_real_example=True)
+                            sentiment=sentiment, cs_dist=cs_dist, is_real_example=True)
 
     return feature
 
@@ -288,6 +303,7 @@ def file_based_convert_examples_to_features(examples, label_list, max_seq_length
         features["label_ids"] = create_int_feature([feature.label_id])
         features["is_real_example"] = create_int_feature([int(feature.is_real_example)])
         features["sentiment"] = create_tensor_feature(feature.sentiment)
+        features["cs_dist"] = create_tensor_feature(feature.cs_dist)
 
         tf_example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())
@@ -304,6 +320,7 @@ def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remain
         "label_ids": tf.FixedLenFeature([], tf.int64),
         "is_real_example": tf.FixedLenFeature([], tf.int64),
         "sentiment": tf.FixedLenFeature([5, 4], tf.float32),
+        "cs_dist": tf.FixedLenFeature([4], tf.float32),
     }
 
     def _decode_record(record, name_to_features):
@@ -357,7 +374,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 # -------------------------------------------------------------------------------------------------------------------- #
 # Model loaders
 def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input_ids,
-                 input_mask, segment_ids, labels, sentiment, num_labels):
+                 input_mask, segment_ids, labels, sentiment, cs_dist, num_labels):
     """Creates a classification model."""
 
     # ---------------------------------------------------------------------------------------------------------------- #
@@ -388,6 +405,10 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
     sentiment_answer = sentiment[:, -1, :]  # (batch_size, 4)
 
     # ---------------------------------------------------------------------------------------------------------------- #
+    # Common Sense
+    # cs_dist = cs_dist  # (batch_size, 4)
+
+    # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
     output_weights = tf.get_variable("rs_output_weights", [num_labels, hidden_size],
                                      initializer=tf.truncated_normal_initializer(stddev=0.02))
@@ -413,6 +434,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
         per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
         loss = tf.reduce_mean(per_example_loss)
 
+        tf.logging.info("cs_dist, shape = %s" % cs_dist.shape)
         tf.logging.info("logits, shape = %s" % logits.shape)  # (batch_size, num_labels)
         tf.logging.info("probabilities, shape = %s" % probabilities.shape)  # (batch_size, num_labels)
         tf.logging.info("log_probs, shape = %s" % log_probs.shape)  # (batch_size, num_labels)
@@ -424,8 +446,8 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
         return loss, per_example_loss, logits, probabilities, predicted_labels
 
 
-def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate, num_train_steps,
-                     num_warmup_steps):
+def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate,
+                     num_train_steps, num_warmup_steps):
     """Returns `model_fn` closure for Estimator."""
 
     def model_fn(features, labels, mode, params):
@@ -442,6 +464,7 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         segment_ids = features["segment_ids"]  # (batch_size, max_seq_length)
         label_ids = features["label_ids"]  # (batch_size, )
         sentiment = features["sentiment"]  # (batch_size, 5, 4)
+        cs_dist = features["cs_dist"]  # (batch_size, 4)
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Model
@@ -454,6 +477,7 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                                                                                        segment_ids,
                                                                                        label_ids,
                                                                                        sentiment,
+                                                                                       cs_dist,
                                                                                        num_labels)
 
         # ------------------------------------------------------------------------------------------------------------ #
