@@ -54,4 +54,5 @@ python bert_sct.py
 ```
 
 Local directory hierarchy.
-![Local directory hierarchy.](./docs/dir.png?raw=true "Title")
+
+![Local directory hierarchy.](./docs/dir.PNG?raw=false "Local directory hierarchy.")
