@@ -1,0 +1,7 @@
+https://colab.research.google.com/drive/19XPJ69UtBZFbVt__PEj9KZLzIhwU1vrt
+
+Before running upload following files:
+
+- bert_utils.py
+- tokenization.py (from Bert github repository)
+- cloze_test_val__spring2016 - cloze_test_ALL_val.csv
