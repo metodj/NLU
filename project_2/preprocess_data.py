@@ -31,7 +31,7 @@ def pp_data_train(df, method="random", sentiment=True):
     df_pos["unique_id"] = df["storyid"]
     df_pos["text_a"] = df.apply(pp_text_a, axis=1)
     df_pos["text_b"] = df.apply(pp_text_b_pos, axis=1)
-    df_pos["label"] = "positive"
+    df_pos["label"] = 1  # "positive"
 
     # Sentiment
     if sentiment:
@@ -47,7 +47,7 @@ def pp_data_train(df, method="random", sentiment=True):
         df_neg["unique_id"] = df_pos["unique_id"]
         df_neg["text_a"] = df_pos["text_a"]
         df_neg["text_b"] = df["sentence3"].sample(frac=1.0, random_state=0).reset_index(drop=True)  # Random sentence3
-        df_neg["label"] = "negative"
+        df_neg["label"] = 0  # "negative"
 
         # Sentiment
         if sentiment:
@@ -99,7 +99,7 @@ def pp_data_val(df, sentiment=True):
     df_pos["unique_id"] = df["InputStoryid"]
     df_pos["text_a"] = df.apply(pp_text_a, axis=1)
     df_pos["text_b"] = df.apply(pp_text_b_pos, axis=1)
-    df_pos["label"] = "positive"
+    df_pos["label"] = 1  # "positive"
 
     # Sentiment
     if sentiment:
@@ -113,7 +113,7 @@ def pp_data_val(df, sentiment=True):
     df_neg["unique_id"] = df["InputStoryid"]
     df_neg["text_a"] = df.apply(pp_text_a, axis=1)
     df_neg["text_b"] = df.apply(pp_text_b_neg, axis=1)
-    df_neg["label"] = "negative"
+    df_neg["label"] = 0  # "negative"
 
     # Sentiment
     if sentiment:
@@ -147,7 +147,11 @@ if __name__ == "__main__":
     df_test.to_csv(os.path.join("data_pp", "sct.test.tsv"), sep="\t", header=True, index=False)
 
     # max_seq_len
-    idx = list(df_train.columns).index("text_a")
-    print("train_len", df_train.apply(lambda row: len(row[idx]), axis=1).max())
-    print("val_len", df_val.apply(lambda row: len(row[idx]), axis=1).max())
-    print("test_len", df_test.apply(lambda row: len(row[1]), axis=1).max())
+    idx_a = list(df_train.columns).index("text_a")
+    idx_b = list(df_train.columns).index("text_b")
+    print("train_len", df_train.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_train.apply(lambda row: len(row[idx_b]), axis=1).max())
+    print("val_len", df_val.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_val.apply(lambda row: len(row[idx_b]), axis=1).max())
+    print("test_len", df_test.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_test.apply(lambda row: len(row[idx_b]), axis=1).max())
