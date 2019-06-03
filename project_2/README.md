@@ -40,5 +40,18 @@ python bert_sct.py
 --bert_dir=./bert/
 ```
 
+Using checkpoint, pretrained on training set with masked language model and next sentence prediction loss.
+```
+python bert_sct.py 
+--data_dir=./data_pp/ 
+--output_dir="C:\Users\roksi\output" 
+--do_train=True 
+--do_eval=True 
+--do_predict=True 
+--init_checkpoint=./bert_masked_lm_pp/model.ckpt 
+--bert_dir=./bert/ 
+--num_train_epochs=0.01
+```
+
 Local directory hierarchy.
-![Local directory hierarchy.](./docs/dir_hierarchy.png?raw=true "Title")
+![Local directory hierarchy.](./docs/dir.png?raw=true "Title")
