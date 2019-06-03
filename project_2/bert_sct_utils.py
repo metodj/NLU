@@ -3,11 +3,8 @@ import csv
 import os
 import collections
 import numpy as np
-from bert import tokenization, optimization
+from bert import tokenization, optimization, modeling
 import tensorflow_hub as hub
-
-
-tf.logging.set_verbosity(tf.logging.ERROR)
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -23,6 +20,11 @@ def create_tokenizer_from_hub_module(bert_model_hub):
 
     return tokenization.FullTokenizer(vocab_file=vocab_file,
                                       do_lower_case=do_lower_case)
+
+
+def get_config(bert_config_file):
+    config = modeling.BertConfig.from_json_file(bert_config_file)
+    return config
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -354,46 +356,52 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Model loaders
-def create_model(bert_model_hub, bert_trainable, is_training, input_ids,
+def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input_ids,
                  input_mask, segment_ids, labels, sentiment, num_labels):
     """Creates a classification model."""
 
-    bert_module = hub.Module(
-        bert_model_hub,
-        trainable=bert_trainable)
-    bert_inputs = dict(
-        input_ids=input_ids,
-        input_mask=input_mask,
-        segment_ids=segment_ids)
-    bert_outputs = bert_module(
-        inputs=bert_inputs,
-        signature="tokens",
-        as_dict=True)
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # BERT
+    if bert_model_hub:
+        bert_module = hub.Module(bert_model_hub, trainable=bert_trainable)
+        bert_inputs = dict(input_ids=input_ids, input_mask=input_mask, segment_ids=segment_ids)
+        bert_outputs = bert_module(inputs=bert_inputs, signature="tokens", as_dict=True)
 
-    output_layer = bert_outputs["pooled_output"]  # (batch_size, 768)
-    sentiment_context = sentiment[:, 0:-1, :]  # (batch_size, 4, 4)
-    sentiment_answer = sentiment[:, -1, :]  # (batch_size, 4)
+        output_layer = bert_outputs["pooled_output"]  # (batch_size, 768)
+    else:
+        model = modeling.BertModel(
+            config=bert_config,
+            is_training=is_training,
+            input_ids=input_ids,
+            input_mask=input_mask,
+            token_type_ids=segment_ids,
+            use_one_hot_embeddings=False)
+
+        output_layer = model.get_pooled_output()  # (batch_size, 768)
 
     hidden_size = output_layer.shape[-1].value  # 768
     batch_size = tf.shape(output_layer)[0]
 
-    output_weights = tf.get_variable(
-        "rs_output_weights", [num_labels, hidden_size],
-        initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Sentiment
+    sentiment_context = sentiment[:, 0:-1, :]  # (batch_size, 4, 4)
+    sentiment_answer = sentiment[:, -1, :]  # (batch_size, 4)
 
-    output_bias = tf.get_variable(
-        "rs_output_bias", [num_labels], initializer=tf.zeros_initializer())
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Weight initialization
+    output_weights = tf.get_variable("rs_output_weights", [num_labels, hidden_size],
+                                     initializer=tf.truncated_normal_initializer(stddev=0.02))
 
-    output_bias_add = tf.get_variable(
-        "rs_output_bias_add", [num_labels], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    output_bias = tf.get_variable("rs_output_bias", [num_labels], initializer=tf.zeros_initializer())
 
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Loss
     with tf.variable_scope("loss"):
         if is_training:
             output_layer = tf.nn.dropout(output_layer, rate=0.1)
 
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
-        logits = tf.nn.bias_add(logits, output_bias_add)
 
         probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
@@ -416,13 +424,15 @@ def create_model(bert_model_hub, bert_trainable, is_training, input_ids,
         return loss, per_example_loss, logits, probabilities, predicted_labels
 
 
-def model_fn_builder(bert_model_hub, bert_trainable, num_labels, learning_rate, num_train_steps,
+def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate, num_train_steps,
                      num_warmup_steps):
     """Returns `model_fn` closure for Estimator."""
 
     def model_fn(features, labels, mode, params):
         """The `model_fn` for Estimator."""
 
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Input
         # tf.logging.info("*** Features ***")
         # for name in sorted(features.keys()):
         #     tf.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
@@ -433,30 +443,50 @@ def model_fn_builder(bert_model_hub, bert_trainable, num_labels, learning_rate, 
         label_ids = features["label_ids"]  # (batch_size, )
         sentiment = features["sentiment"]  # (batch_size, 5, 4)
 
-        is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Model
+        loss, per_example_loss, logits, probabilities, predicted_labels = create_model(bert_model_hub,
+                                                                                       bert_trainable,
+                                                                                       bert_config,
+                                                                                       mode == tf.estimator.ModeKeys.TRAIN,
+                                                                                       input_ids,
+                                                                                       input_mask,
+                                                                                       segment_ids,
+                                                                                       label_ids,
+                                                                                       sentiment,
+                                                                                       num_labels)
 
-        total_loss, per_example_loss, logits, probabilities, predicted_labels = create_model(bert_model_hub,
-                                                                                             bert_trainable,
-                                                                                             is_training,
-                                                                                             input_ids,
-                                                                                             input_mask,
-                                                                                             segment_ids,
-                                                                                             label_ids,
-                                                                                             sentiment,
-                                                                                             num_labels)
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Initialize
+        tvars = tf.trainable_variables()
 
-        # tvars = tf.trainable_variables()
-        # tf.logging.info("**** Trainable Variables ****")
-        # for var in tvars:
-        #     tf.logging.info("  name = %s, shape = %s", var.name, var.shape)
+        if bert_model_hub:
+            tf.logging.info("**** Trainable Variables ****")
+            for var in tvars:
+                tf.logging.info("  name = %s, shape = %s", var.name, var.shape)
 
-        output_spec = None
-        if is_training:
-            train_op = optimization.create_optimizer(total_loss, learning_rate, num_train_steps,
+        else:
+            initialized_variable_names = {}
+            if init_checkpoint:
+                (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
+                                                                                                           init_checkpoint)
+                tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+
+            tf.logging.info("**** Trainable Variables ****")
+            for var in tvars:
+                init_string = ""
+                if var.name in initialized_variable_names:
+                    init_string = ", *INIT_FROM_CKPT*"
+                tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
+
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Mode
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            train_op = optimization.create_optimizer(loss, learning_rate, num_train_steps,
                                                      num_warmup_steps, use_tpu=False)
 
             output_spec = tf.estimator.EstimatorSpec(mode=mode,
-                                                     loss=total_loss,
+                                                     loss=loss,
                                                      train_op=train_op)
 
         elif mode == tf.estimator.ModeKeys.EVAL:
@@ -473,7 +503,7 @@ def model_fn_builder(bert_model_hub, bert_trainable, num_labels, learning_rate, 
 
             eval_metrics = metric_fn(per_example_loss, label_ids, predicted_labels)
             output_spec = tf.estimator.EstimatorSpec(mode=mode,
-                                                     loss=total_loss,
+                                                     loss=loss,
                                                      eval_metric_ops=eval_metrics)
 
         else:

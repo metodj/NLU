@@ -4,10 +4,10 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
+from bert import tokenization
 
-from bert_sct_utils import create_tokenizer_from_hub_module, SctProcessor
+from bert_sct_utils import create_tokenizer_from_hub_module, SctProcessor, get_config
 from bert_sct_utils import model_fn_builder, file_based_input_fn_builder, file_based_convert_examples_to_features
-
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -17,8 +17,10 @@ flags.DEFINE_string("output_dir", None, "The output directory where the model ch
 flags.DEFINE_string("results_dir", "./results/", "The output directory for result files.")
 
 # BERT
-flags.DEFINE_string("bert_model_hub", "https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1", "Pretrained BERT.")
+flags.DEFINE_string("bert_model_hub", None, "Pretrained BERT. (default)")
+flags.DEFINE_string("bert_dir", None, "Local directory of pretrained BERT.")
 flags.DEFINE_bool("bert_trainable", False, "Whether BERT weights are trainable.")
+flags.DEFINE_string("init_checkpoint", None, "Initial checkpoint of BERT.")
 
 # Training or evaluation
 flags.DEFINE_bool("do_train", False, "Whether to run training.")
@@ -35,6 +37,9 @@ flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform 
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
 
+    if not(FLAGS.bert_model_hub or (FLAGS.bert_dir and FLAGS.init_checkpoint)):
+        raise ValueError("bert_model_hub or (bert_config_file and init_checkpoint)")
+
     # ---------------------------------------------------------------------------------------------------------------- #
     # Create output directory
     tf.gfile.MakeDirs(FLAGS.output_dir)
@@ -43,10 +48,18 @@ def main(_):
     # Processor
     processor = SctProcessor()
     label_list = processor.get_labels()
-    tokenizer = create_tokenizer_from_hub_module(FLAGS.bert_model_hub)
+
+    bert_config = None
+    if not FLAGS.init_checkpoint:
+        tokenizer = create_tokenizer_from_hub_module(FLAGS.bert_model_hub)
+
+    else:
+        tokenizer = tokenization.FullTokenizer(vocab_file=os.path.join(FLAGS.bert_dir, "vocab.txt"),
+                                               do_lower_case=False)
+        bert_config = get_config(os.path.join(FLAGS.bert_dir, "bert_config.json"))
 
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Traning
+    # Model and Estimator
     train_examples = None
     num_train_steps = None
     num_warmup_steps = None
@@ -61,6 +74,8 @@ def main(_):
 
     model_fn = model_fn_builder(bert_model_hub=FLAGS.bert_model_hub,
                                 bert_trainable=FLAGS.bert_trainable,
+                                bert_config=bert_config,
+                                init_checkpoint=FLAGS.init_checkpoint,
                                 num_labels=len(label_list),
                                 learning_rate=FLAGS.learning_rate,
                                 num_train_steps=num_train_steps,
@@ -74,6 +89,8 @@ def main(_):
                                        config=run_config,
                                        params=params)
 
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Training
     if FLAGS.do_train:
         train_file = os.path.join(FLAGS.data_dir, "train.tf_record")
         file_based_convert_examples_to_features(train_examples,
@@ -94,6 +111,8 @@ def main(_):
 
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Evaluation
     if FLAGS.do_eval:
         eval_examples = processor.get_dev_examples(FLAGS.data_dir)
 
@@ -123,6 +142,8 @@ def main(_):
                 tf.logging.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))
 
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Test
     if FLAGS.do_predict:
         predict_examples = processor.get_test_examples(FLAGS.data_dir)
 
