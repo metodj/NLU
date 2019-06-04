@@ -1,0 +1,16 @@
+List of experiments:
+
+1) vanilla BERT (binary classifier, each line split into two stories)
+2) BERT2 (pipeline from today, selecting the correct ending), using eval set only
+3) BERT2 + checkpoint from pretrained BERT (training set on masked language model),
+using eval set only
+4) BERT2 using training set with negative random sampling
+
+5) sentiment
+6) commonsense
+
+7 BERT (best model from 1-4) + sentiment + commonsense*
+
+*still to decide how to bring together those 3 components. Some ideas:
+- concatenate hidden_representation obtained from BERT, cosine similarity 
+between E_p and E_e, commonsense vector D. Train single linear classifier on top.
