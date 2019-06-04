@@ -1,15 +1,15 @@
-import os
 import tensorflow as tf
-import numpy as np
-import pickle
-import warnings
-import pandas as pd
-
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import csv
-
-import utils as utils
+import math
 from model import Model
+
+#import numpy as np
+#import os
+#import pickle
+#import warnings
+#import pandas as pd
+#from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+#import csv
+#import utils as utils
 
 
 # train stories are 88161
@@ -18,11 +18,9 @@ from model import Model
 # total validation batches are 234
 
 
-
 #GRAPH
 
 tf.reset_default_graph()
-
 
 model = Model(initializer=tf.contrib.layers.xavier_initializer(),
               stories_file='data/train_stories.csv',
@@ -33,8 +31,12 @@ model = Model(initializer=tf.contrib.layers.xavier_initializer(),
               learning_rate=0.001,
               batch_size=8,
               max_grad_norm=5.0,
-              num_epochs=1)
-
+              num_epochs=1,
+              num_epochs_sc=1,
+              #sc_train_loss='AC'
+              sent_perc_train=0.80,
+              sc_perc_train=0.80,
+              )
 
 #SESSION
 
@@ -42,17 +44,27 @@ with tf.Session() as session:
 
     session.run(tf.global_variables_initializer())
 
+    session.run(model.running_vars_initializer)
 
-    with open('experiments/exp_final_1.txt', 'w') as result_file:
+    final_accuracy = 0.0
 
-        train_sent_batches = 8817
+
+    with open('experiments_final/experiments/experiment_3.txt', 'w') as result_file:
+
+        result_file.write('\n\nDETAILS: ' + '\n\n' + \
+                          'Batch size : ' + str(model.batch_size) + '\n' + \
+                          'Num epochs sentiment model training : ' + str(model.num_epochs) + '\n' + \
+                          'Num epochs story cloze fine tuning training : ' + str(model.num_epochs_sc) + '\n' +\
+                          'Percentage training sentiment model: '+str(model.sent_perc_train) +'\n' +\
+                          'Percentage training story cloze: '+str(model.sc_perc_train) +'\n')
+
+        train_sent_batches = math.floor(11021 * model.sent_perc_train)
 
         for i in range(model.num_epochs):
 
             session.run(model.iterator_op)
 
             count_batches = 0
-
 
             result_file.write('\n\n'+'START TRAINING SENTIMENT PART EPOCH '+str(i+1)+'\n\n')
 
@@ -71,13 +83,11 @@ with tf.Session() as session:
                         result_file.write('Processed batches: '+ str(count_batches)+'\n'+
                                           'Batch loss: '+str(b_loss)+'\n'+
                                           'Global step: '+ str(g_step)+'\n')
-
                     if count_batches == train_sent_batches:
                         break
 
                 except tf.errors.OutOfRangeError:
                     break
-
 
             # TESTING THE SENTIMENT MODEL ON PART OF TRAINING DATASET
 
@@ -98,60 +108,71 @@ with tf.Session() as session:
 
                 except tf.errors.OutOfRangeError:
                     break
-        
-        result_file.write('\n\n'+'STARTING TRAINING STORY CLOZE'+'\n\n')
 
-        session.run(model.iterator_val_op)
+        for j in range(model.num_epochs_sc):
 
-        count_sc_batches = 0
+            # TRAINING STORY CLOZE TASK
 
-        train_sc_batches = 187
+            result_file.write('\n\n'+'STARTING TRAINING PART STORY CLOZE EPOCH '+ str(j+1) +'\n\n')
 
-        while True:
+            session.run(model.iterator_val_op)
 
-            try:
+            count_sc_batches = 0
 
-                b_loss_sc, _ , g_step = session.run([model.loss_sc, model.optimize_sc_op, model.global_step])
+            train_sc_batches = math.floor(234 * model.sent_perc_train)
 
-                count_sc_batches += 1
+            while True:
 
-                if count_sc_batches % 10:
+                try:
 
-                    result_file.write('Processed batches: ' + str(count_sc_batches) + '\n' +\
-                                      'Batch loss: ' + str(b_loss_sc) + '\n' +\
-                                      'Global step: ' + str(g_step) + '\n')
+                    b_loss_sc, _ , g_step = session.run([model.ce_loss_sc, model.optimize_sc_op, model.global_step])
 
-                if count_sc_batches == train_sc_batches:
+                    count_sc_batches += 1
+
+                    if count_sc_batches % 10:
+
+                        result_file.write('Processed batches: ' + str(count_sc_batches) + '\n' +\
+                                          'Batch loss: ' + str(b_loss_sc) + '\n' +\
+                                          'Global step: ' + str(g_step) + '\n')
+
+                    if count_sc_batches == train_sc_batches:
+                        break
+
+                except tf.errors.OutOfRangeError:
                     break
 
-            except tf.errors.OutOfRangeError:
-                break
-        
-        result_file.write('\n\n' + 'STARTING TESTING STORY CLOZE' + '\n\n')
+            # TESTING STORY CLOZE TASK
 
-        '''
-        while True:
+            result_file.write('\n\n' + 'STARTING TESTING PART STORY CLOZE EPOCH ' + str(j+1) +'\n\n')
 
-            try:
+            while True:
 
-                acc = session.run([model.accuracy])
+                try:
 
-                count_sc_batches += 1
+                    acc, acc_op, g_step = session.run([model.accuracy, model.accuracy_op, model.global_step])
 
-                result_file.write(str(acc)+'\n')
+                    count_sc_batches += 1
 
-            except tf.errors.OutOfRangeError:
-                break
-        '''
+                    result_file.write('Processed batches :' + str(count_sc_batches-train_sc_batches) + '\n' +\
+                                      'Accuracy: ' + str(acc) +'\n'
+                                      #'Global step (must remain constant): ' + str(g_step) + '\n'\
+                                     )
+                    final_accuracy = acc
+
+                except tf.errors.OutOfRangeError:
+                    break
+
+            result_file.write('\n\n' + 'ACCURACY TEST STORY CLOZE TASK EPOCH ' + str(j + 1) + '\n'+str(final_accuracy)+'\n\n')
 
 
 
 
+'''
 
 #   THIS PART IS TO HAVE THE TXT FILE WITH THE PREDICTED AND THE VADER SENTIMENT EMBEDDINGS
 
 
-    with open('experiments/s_files/s_file_final_1.txt', 'w') as p_file:
+    with open('experiments_final/sentiment_txt_files/split/sentiment_tr3ep+50%val.txt', 'w') as p_file:
         
         session.run(model.iterator_val_op)
         
@@ -169,6 +190,8 @@ with tf.Session() as session:
                         p_file.write(str(ep[i]) +' '+ str(ee1[i]) +'\n')
                         p_file.write(str(ep[i]) +' '+ str(ee2[i]) +'\n')
 
+                        #p_file.write(str(ep[i]) + ' ' + str(ee1[i])+' '+ str(ee2[i]) + '\n')
+
 
                     except IndexError:
                         break
@@ -179,8 +202,4 @@ with tf.Session() as session:
 
 
 
-
-
-
-
-
+'''

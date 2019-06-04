@@ -1,20 +1,19 @@
-import os
 import tensorflow as tf
+import utils as utils
+
+import os
 import numpy as np
 import pickle
 import warnings
 import pandas as pd
-
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import csv
-
-import utils as utils
 
 
 class Model:
 
     def __init__(self,initializer,stories_file, validation_file, embedding_dim=3, state_dim = 64, stories_dim = 5,  learning_rate=0.001, batch_size=8, max_grad_norm=5.0,
-                 num_epochs=1):
+                 num_epochs=1, num_epochs_sc=1, sent_perc_train=0.80, sc_perc_train=0.80):
 
 
         #Model parameters
@@ -30,15 +29,23 @@ class Model:
         self.batch_size = batch_size
         self.max_grad_norm = max_grad_norm
         self.num_epochs = num_epochs
+        self.num_epochs_sc = num_epochs_sc
         self.initializer = initializer
         self.global_step = tf.Variable(0, name="global_step", trainable=False)
-
 
 
         # Input files
         self.stories_file = stories_file
         self.validation_file = validation_file
 
+        # Train percentages
+        self.sent_perc_train=sent_perc_train
+        self.sc_perc_train=sc_perc_train
+
+        '''
+        # Story Cloze Train Loss
+        self.sc_train_loss = sc_train_loss
+        '''
 
         with tf.name_scope("dataset_initialization_training"):
 
@@ -77,9 +84,7 @@ class Model:
         with tf.name_scope('lstm'):
 
             #to adjust dimension for last batch
-
             batch_size = tf.shape(self.x_batch)[0]
-
 
             # LSTM Cell  : is it correct the number of units?
             self.LSTM = tf.nn.rnn_cell.BasicLSTMCell(num_units=self.state_dim, name="lstm_cell")
@@ -118,21 +123,30 @@ class Model:
             '''
             # self.one_hot_ans_batch = tf.one_hot(indices=self.ans_batch, depth=2)
 
+
+        with tf.name_scope('soft_max_cross_entropy_loss'):
+
             loss_sc_batch = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.ans_batch, logits=self.logits_sc, name = 'sparse_cross_entropy_softmax_sc')
 
-            self.loss_sc = tf.reduce_mean(loss_sc_batch)
+            self.ce_loss_sc = tf.reduce_mean(loss_sc_batch)
 
-        '''
 
         with tf.name_scope('accuracy'):
 
             self.predictions = tf.argmax(self.logits_sc, axis=1)
 
-            #print(self.predictions.shape, self.ans_batch.shape)
+            self.accuracy, self.accuracy_op = tf.metrics.accuracy(labels=self.ans_batch, predictions=self.predictions, name='accuracy')
 
-            self.accuracy = tf.metrics.accuracy(labels=self.ans_batch, predictions=self.predictions)
+            #self.acc_loss_sc = - (self.accuracy_op)
 
-        '''
+
+        with tf.name_scope('accuracy_intializer'):
+
+            # Isolate the variables stored behind the scenes by the metric operation
+            running_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="accuracy")
+
+            # Define initializer to initialize/reset running variables
+            self.running_vars_initializer = tf.variables_initializer(var_list=running_vars)
 
 
         with tf.name_scope('optimization'):
@@ -140,9 +154,13 @@ class Model:
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
             optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, clip_norm=self.max_grad_norm)
             self.optimize_op = optimizer.minimize(self.loss, global_step=self.global_step)
-
-            self.optimize_sc_op = optimizer.minimize(self.loss_sc, global_step=self.global_step)
-
+            self.optimize_sc_op = optimizer.minimize(self.ce_loss_sc, global_step=self.global_step)
+            '''
+            if self.sc_train_loss == 'CE':
+                self.optimize_sc_op = optimizer.minimize(self.ce_loss_sc, global_step=self.global_step)
+            elif self.sc_train_loss == 'AC':
+                self.optimize_sc_op = optimizer.minimize(self.acc_loss_sc, global_step=self.global_step)
+            '''
 
 
 '''
@@ -163,8 +181,3 @@ class Model:
 
 
 '''
-
-
-
-
-

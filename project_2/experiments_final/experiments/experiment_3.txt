@@ -1,0 +1,739 @@
+
+
+DETAILS: 
+
+Batch size : 8
+Num epochs sentiment model training : 1
+Num epochs story cloze fine tuning training : 1
+Percentage training sentiment model: 0.8
+Percentage training story cloze: 0.8
+
+
+START TRAINING SENTIMENT PART EPOCH 1
+
+Processed batches: 300
+Batch loss: -0.9216893
+Global step: 300
+Processed batches: 600
+Batch loss: -0.91445935
+Global step: 600
+Processed batches: 900
+Batch loss: -0.971841
+Global step: 900
+Processed batches: 1200
+Batch loss: -0.963948
+Global step: 1200
+Processed batches: 1500
+Batch loss: -0.93578833
+Global step: 1500
+Processed batches: 1800
+Batch loss: -0.935168
+Global step: 1800
+Processed batches: 2100
+Batch loss: -0.89221394
+Global step: 2100
+Processed batches: 2400
+Batch loss: -0.9092267
+Global step: 2400
+Processed batches: 2700
+Batch loss: -0.9245417
+Global step: 2700
+Processed batches: 3000
+Batch loss: -0.95585537
+Global step: 3000
+Processed batches: 3300
+Batch loss: -0.9524949
+Global step: 3300
+Processed batches: 3600
+Batch loss: -0.9458102
+Global step: 3600
+Processed batches: 3900
+Batch loss: -0.91760623
+Global step: 3900
+Processed batches: 4200
+Batch loss: -0.9424034
+Global step: 4200
+Processed batches: 4500
+Batch loss: -0.9111819
+Global step: 4500
+Processed batches: 4800
+Batch loss: -0.948971
+Global step: 4800
+Processed batches: 5100
+Batch loss: -0.8787872
+Global step: 5100
+Processed batches: 5400
+Batch loss: -0.93174815
+Global step: 5400
+Processed batches: 5700
+Batch loss: -0.9546688
+Global step: 5700
+Processed batches: 6000
+Batch loss: -0.9534923
+Global step: 6000
+Processed batches: 6300
+Batch loss: -0.9628093
+Global step: 6300
+Processed batches: 6600
+Batch loss: -0.9127381
+Global step: 6600
+Processed batches: 6900
+Batch loss: -0.91564333
+Global step: 6900
+Processed batches: 7200
+Batch loss: -0.91584086
+Global step: 7200
+Processed batches: 7500
+Batch loss: -0.92733556
+Global step: 7500
+Processed batches: 7800
+Batch loss: -0.94016695
+Global step: 7800
+Processed batches: 8100
+Batch loss: -0.96182793
+Global step: 8100
+Processed batches: 8400
+Batch loss: -0.9429049
+Global step: 8400
+Processed batches: 8700
+Batch loss: -0.92858887
+Global step: 8700
+
+
+START TESTING SENTIMENT PART EPOCH 1
+
+Processed batches: 184
+Batch loss: [-0.96016204]
+Global step: 8816
+Processed batches: 484
+Batch loss: [-0.97543025]
+Global step: 8816
+Processed batches: 784
+Batch loss: [-0.91946083]
+Global step: 8816
+Processed batches: 1084
+Batch loss: [-0.89092916]
+Global step: 8816
+Processed batches: 1384
+Batch loss: [-0.91914356]
+Global step: 8816
+Processed batches: 1684
+Batch loss: [-0.94591844]
+Global step: 8816
+Processed batches: 1984
+Batch loss: [-0.9152571]
+Global step: 8816
+
+
+STARTING TRAINING PART STORY CLOZE EPOCH 1
+
+Processed batches: 1
+Batch loss: 0.77795166
+Global step: 8817
+Processed batches: 2
+Batch loss: 0.78056276
+Global step: 8818
+Processed batches: 3
+Batch loss: 0.7224739
+Global step: 8819
+Processed batches: 4
+Batch loss: 0.70564383
+Global step: 8820
+Processed batches: 5
+Batch loss: 0.81718534
+Global step: 8821
+Processed batches: 6
+Batch loss: 0.81598157
+Global step: 8822
+Processed batches: 7
+Batch loss: 0.7538004
+Global step: 8823
+Processed batches: 8
+Batch loss: 0.71545124
+Global step: 8824
+Processed batches: 9
+Batch loss: 0.7156793
+Global step: 8825
+Processed batches: 11
+Batch loss: 0.67465293
+Global step: 8827
+Processed batches: 12
+Batch loss: 0.7214663
+Global step: 8828
+Processed batches: 13
+Batch loss: 0.7426822
+Global step: 8829
+Processed batches: 14
+Batch loss: 0.8024552
+Global step: 8830
+Processed batches: 15
+Batch loss: 0.8326191
+Global step: 8831
+Processed batches: 16
+Batch loss: 0.76477593
+Global step: 8832
+Processed batches: 17
+Batch loss: 0.7277198
+Global step: 8833
+Processed batches: 18
+Batch loss: 0.719951
+Global step: 8834
+Processed batches: 19
+Batch loss: 0.73926663
+Global step: 8835
+Processed batches: 21
+Batch loss: 0.77116346
+Global step: 8837
+Processed batches: 22
+Batch loss: 0.7090165
+Global step: 8838
+Processed batches: 23
+Batch loss: 0.73450476
+Global step: 8839
+Processed batches: 24
+Batch loss: 0.73601407
+Global step: 8840
+Processed batches: 25
+Batch loss: 0.79274875
+Global step: 8841
+Processed batches: 26
+Batch loss: 0.6588744
+Global step: 8842
+Processed batches: 27
+Batch loss: 0.6317816
+Global step: 8843
+Processed batches: 28
+Batch loss: 0.7154119
+Global step: 8844
+Processed batches: 29
+Batch loss: 0.68408275
+Global step: 8845
+Processed batches: 31
+Batch loss: 0.7241167
+Global step: 8847
+Processed batches: 32
+Batch loss: 0.6619424
+Global step: 8848
+Processed batches: 33
+Batch loss: 0.75723726
+Global step: 8849
+Processed batches: 34
+Batch loss: 0.7770284
+Global step: 8850
+Processed batches: 35
+Batch loss: 0.76886654
+Global step: 8851
+Processed batches: 36
+Batch loss: 0.7758423
+Global step: 8852
+Processed batches: 37
+Batch loss: 0.7359413
+Global step: 8853
+Processed batches: 38
+Batch loss: 0.7145072
+Global step: 8854
+Processed batches: 39
+Batch loss: 0.6749715
+Global step: 8855
+Processed batches: 41
+Batch loss: 0.7314409
+Global step: 8857
+Processed batches: 42
+Batch loss: 0.70190966
+Global step: 8858
+Processed batches: 43
+Batch loss: 0.7511254
+Global step: 8859
+Processed batches: 44
+Batch loss: 0.6729094
+Global step: 8860
+Processed batches: 45
+Batch loss: 0.7174405
+Global step: 8861
+Processed batches: 46
+Batch loss: 0.7453279
+Global step: 8862
+Processed batches: 47
+Batch loss: 0.69432175
+Global step: 8863
+Processed batches: 48
+Batch loss: 0.72361255
+Global step: 8864
+Processed batches: 49
+Batch loss: 0.7162742
+Global step: 8865
+Processed batches: 51
+Batch loss: 0.73794055
+Global step: 8867
+Processed batches: 52
+Batch loss: 0.75638604
+Global step: 8868
+Processed batches: 53
+Batch loss: 0.74189776
+Global step: 8869
+Processed batches: 54
+Batch loss: 0.7319571
+Global step: 8870
+Processed batches: 55
+Batch loss: 0.73570704
+Global step: 8871
+Processed batches: 56
+Batch loss: 0.71618783
+Global step: 8872
+Processed batches: 57
+Batch loss: 0.6739925
+Global step: 8873
+Processed batches: 58
+Batch loss: 0.71516675
+Global step: 8874
+Processed batches: 59
+Batch loss: 0.68232465
+Global step: 8875
+Processed batches: 61
+Batch loss: 0.77356076
+Global step: 8877
+Processed batches: 62
+Batch loss: 0.7205777
+Global step: 8878
+Processed batches: 63
+Batch loss: 0.6324635
+Global step: 8879
+Processed batches: 64
+Batch loss: 0.63879365
+Global step: 8880
+Processed batches: 65
+Batch loss: 0.7157691
+Global step: 8881
+Processed batches: 66
+Batch loss: 0.6780126
+Global step: 8882
+Processed batches: 67
+Batch loss: 0.7194206
+Global step: 8883
+Processed batches: 68
+Batch loss: 0.69604504
+Global step: 8884
+Processed batches: 69
+Batch loss: 0.6247959
+Global step: 8885
+Processed batches: 71
+Batch loss: 0.69921607
+Global step: 8887
+Processed batches: 72
+Batch loss: 0.6843554
+Global step: 8888
+Processed batches: 73
+Batch loss: 0.6433798
+Global step: 8889
+Processed batches: 74
+Batch loss: 0.7187464
+Global step: 8890
+Processed batches: 75
+Batch loss: 0.7205131
+Global step: 8891
+Processed batches: 76
+Batch loss: 0.7047411
+Global step: 8892
+Processed batches: 77
+Batch loss: 0.66490066
+Global step: 8893
+Processed batches: 78
+Batch loss: 0.63881075
+Global step: 8894
+Processed batches: 79
+Batch loss: 0.699752
+Global step: 8895
+Processed batches: 81
+Batch loss: 0.74195844
+Global step: 8897
+Processed batches: 82
+Batch loss: 0.743533
+Global step: 8898
+Processed batches: 83
+Batch loss: 0.7327002
+Global step: 8899
+Processed batches: 84
+Batch loss: 0.743773
+Global step: 8900
+Processed batches: 85
+Batch loss: 0.7312207
+Global step: 8901
+Processed batches: 86
+Batch loss: 0.7292254
+Global step: 8902
+Processed batches: 87
+Batch loss: 0.7523676
+Global step: 8903
+Processed batches: 88
+Batch loss: 0.7271111
+Global step: 8904
+Processed batches: 89
+Batch loss: 0.6841335
+Global step: 8905
+Processed batches: 91
+Batch loss: 0.73306656
+Global step: 8907
+Processed batches: 92
+Batch loss: 0.68931067
+Global step: 8908
+Processed batches: 93
+Batch loss: 0.6639863
+Global step: 8909
+Processed batches: 94
+Batch loss: 0.7073412
+Global step: 8910
+Processed batches: 95
+Batch loss: 0.6956799
+Global step: 8911
+Processed batches: 96
+Batch loss: 0.70557904
+Global step: 8912
+Processed batches: 97
+Batch loss: 0.6710101
+Global step: 8913
+Processed batches: 98
+Batch loss: 0.6560471
+Global step: 8914
+Processed batches: 99
+Batch loss: 0.70339036
+Global step: 8915
+Processed batches: 101
+Batch loss: 0.72944045
+Global step: 8917
+Processed batches: 102
+Batch loss: 0.6961503
+Global step: 8918
+Processed batches: 103
+Batch loss: 0.6939476
+Global step: 8919
+Processed batches: 104
+Batch loss: 0.72932065
+Global step: 8920
+Processed batches: 105
+Batch loss: 0.72465205
+Global step: 8921
+Processed batches: 106
+Batch loss: 0.7313776
+Global step: 8922
+Processed batches: 107
+Batch loss: 0.6690018
+Global step: 8923
+Processed batches: 108
+Batch loss: 0.722933
+Global step: 8924
+Processed batches: 109
+Batch loss: 0.75772095
+Global step: 8925
+Processed batches: 111
+Batch loss: 0.72547823
+Global step: 8927
+Processed batches: 112
+Batch loss: 0.71263826
+Global step: 8928
+Processed batches: 113
+Batch loss: 0.66357386
+Global step: 8929
+Processed batches: 114
+Batch loss: 0.7185736
+Global step: 8930
+Processed batches: 115
+Batch loss: 0.7042508
+Global step: 8931
+Processed batches: 116
+Batch loss: 0.7176615
+Global step: 8932
+Processed batches: 117
+Batch loss: 0.67944837
+Global step: 8933
+Processed batches: 118
+Batch loss: 0.6795951
+Global step: 8934
+Processed batches: 119
+Batch loss: 0.67047834
+Global step: 8935
+Processed batches: 121
+Batch loss: 0.68992865
+Global step: 8937
+Processed batches: 122
+Batch loss: 0.72215426
+Global step: 8938
+Processed batches: 123
+Batch loss: 0.6917458
+Global step: 8939
+Processed batches: 124
+Batch loss: 0.7153416
+Global step: 8940
+Processed batches: 125
+Batch loss: 0.6988784
+Global step: 8941
+Processed batches: 126
+Batch loss: 0.71656305
+Global step: 8942
+Processed batches: 127
+Batch loss: 0.7185861
+Global step: 8943
+Processed batches: 128
+Batch loss: 0.6974328
+Global step: 8944
+Processed batches: 129
+Batch loss: 0.73689806
+Global step: 8945
+Processed batches: 131
+Batch loss: 0.67110497
+Global step: 8947
+Processed batches: 132
+Batch loss: 0.67249984
+Global step: 8948
+Processed batches: 133
+Batch loss: 0.7096341
+Global step: 8949
+Processed batches: 134
+Batch loss: 0.6847676
+Global step: 8950
+Processed batches: 135
+Batch loss: 0.67347836
+Global step: 8951
+Processed batches: 136
+Batch loss: 0.74442154
+Global step: 8952
+Processed batches: 137
+Batch loss: 0.6885284
+Global step: 8953
+Processed batches: 138
+Batch loss: 0.71231717
+Global step: 8954
+Processed batches: 139
+Batch loss: 0.7037761
+Global step: 8955
+Processed batches: 141
+Batch loss: 0.7055166
+Global step: 8957
+Processed batches: 142
+Batch loss: 0.726027
+Global step: 8958
+Processed batches: 143
+Batch loss: 0.71192276
+Global step: 8959
+Processed batches: 144
+Batch loss: 0.6732316
+Global step: 8960
+Processed batches: 145
+Batch loss: 0.65221584
+Global step: 8961
+Processed batches: 146
+Batch loss: 0.66361225
+Global step: 8962
+Processed batches: 147
+Batch loss: 0.7222325
+Global step: 8963
+Processed batches: 148
+Batch loss: 0.7063823
+Global step: 8964
+Processed batches: 149
+Batch loss: 0.663445
+Global step: 8965
+Processed batches: 151
+Batch loss: 0.7130786
+Global step: 8967
+Processed batches: 152
+Batch loss: 0.6772381
+Global step: 8968
+Processed batches: 153
+Batch loss: 0.70926875
+Global step: 8969
+Processed batches: 154
+Batch loss: 0.7354565
+Global step: 8970
+Processed batches: 155
+Batch loss: 0.6651129
+Global step: 8971
+Processed batches: 156
+Batch loss: 0.67346084
+Global step: 8972
+Processed batches: 157
+Batch loss: 0.6591137
+Global step: 8973
+Processed batches: 158
+Batch loss: 0.6793597
+Global step: 8974
+Processed batches: 159
+Batch loss: 0.69021213
+Global step: 8975
+Processed batches: 161
+Batch loss: 0.6876838
+Global step: 8977
+Processed batches: 162
+Batch loss: 0.7051546
+Global step: 8978
+Processed batches: 163
+Batch loss: 0.6890782
+Global step: 8979
+Processed batches: 164
+Batch loss: 0.6886487
+Global step: 8980
+Processed batches: 165
+Batch loss: 0.6710852
+Global step: 8981
+Processed batches: 166
+Batch loss: 0.69334036
+Global step: 8982
+Processed batches: 167
+Batch loss: 0.68922895
+Global step: 8983
+Processed batches: 168
+Batch loss: 0.68070257
+Global step: 8984
+Processed batches: 169
+Batch loss: 0.69071424
+Global step: 8985
+Processed batches: 171
+Batch loss: 0.7140391
+Global step: 8987
+Processed batches: 172
+Batch loss: 0.6884372
+Global step: 8988
+Processed batches: 173
+Batch loss: 0.68700016
+Global step: 8989
+Processed batches: 174
+Batch loss: 0.7048065
+Global step: 8990
+Processed batches: 175
+Batch loss: 0.69531196
+Global step: 8991
+Processed batches: 176
+Batch loss: 0.6859082
+Global step: 8992
+Processed batches: 177
+Batch loss: 0.673247
+Global step: 8993
+Processed batches: 178
+Batch loss: 0.6828083
+Global step: 8994
+Processed batches: 179
+Batch loss: 0.6732381
+Global step: 8995
+Processed batches: 181
+Batch loss: 0.66812074
+Global step: 8997
+Processed batches: 182
+Batch loss: 0.70417947
+Global step: 8998
+Processed batches: 183
+Batch loss: 0.7122141
+Global step: 8999
+Processed batches: 184
+Batch loss: 0.688042
+Global step: 9000
+Processed batches: 185
+Batch loss: 0.67033136
+Global step: 9001
+Processed batches: 186
+Batch loss: 0.6799444
+Global step: 9002
+Processed batches: 187
+Batch loss: 0.65676165
+Global step: 9003
+
+
+STARTING TESTING PART STORY CLOZE EPOCH 1
+
+Processed batches :1
+Accuracy: 0.0
+Processed batches :2
+Accuracy: 0.5
+Processed batches :3
+Accuracy: 0.625
+Processed batches :4
+Accuracy: 0.5833333
+Processed batches :5
+Accuracy: 0.625
+Processed batches :6
+Accuracy: 0.525
+Processed batches :7
+Accuracy: 0.5208333
+Processed batches :8
+Accuracy: 0.51785713
+Processed batches :9
+Accuracy: 0.515625
+Processed batches :10
+Accuracy: 0.5277778
+Processed batches :11
+Accuracy: 0.55
+Processed batches :12
+Accuracy: 0.5568182
+Processed batches :13
+Accuracy: 0.5625
+Processed batches :14
+Accuracy: 0.5576923
+Processed batches :15
+Accuracy: 0.5714286
+Processed batches :16
+Accuracy: 0.55833334
+Processed batches :17
+Accuracy: 0.5703125
+Processed batches :18
+Accuracy: 0.5661765
+Processed batches :19
+Accuracy: 0.5625
+Processed batches :20
+Accuracy: 0.57236844
+Processed batches :21
+Accuracy: 0.56875
+Processed batches :22
+Accuracy: 0.5595238
+Processed batches :23
+Accuracy: 0.5625
+Processed batches :24
+Accuracy: 0.57608694
+Processed batches :25
+Accuracy: 0.578125
+Processed batches :26
+Accuracy: 0.585
+Processed batches :27
+Accuracy: 0.58653843
+Processed batches :28
+Accuracy: 0.5925926
+Processed batches :29
+Accuracy: 0.59375
+Processed batches :30
+Accuracy: 0.5991379
+Processed batches :31
+Accuracy: 0.6041667
+Processed batches :32
+Accuracy: 0.608871
+Processed batches :33
+Accuracy: 0.6171875
+Processed batches :34
+Accuracy: 0.6212121
+Processed batches :35
+Accuracy: 0.6139706
+Processed batches :36
+Accuracy: 0.61785716
+Processed batches :37
+Accuracy: 0.6111111
+Processed batches :38
+Accuracy: 0.6081081
+Processed batches :39
+Accuracy: 0.60855263
+Processed batches :40
+Accuracy: 0.61538464
+Processed batches :41
+Accuracy: 0.603125
+Processed batches :42
+Accuracy: 0.6006098
+Processed batches :43
+Accuracy: 0.6041667
+Processed batches :44
+Accuracy: 0.6104651
+Processed batches :45
+Accuracy: 0.61079544
+Processed batches :46
+Accuracy: 0.60555553
+Processed batches :47
+Accuracy: 0.61141306
+
+
+ACCURACY TEST STORY CLOZE TASK EPOCH 1
+0.61141306
+

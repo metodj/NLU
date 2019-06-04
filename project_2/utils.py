@@ -1,8 +1,9 @@
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import csv
+
+#import pandas as pd
 
 # DICT TO NUMPY ARRAY
 
@@ -65,7 +66,7 @@ def read_stories(file):
 
 def read_stories(file):
 
-    print("executing read stories")
+    #print("executing read stories")
 
     stories = []
 
@@ -81,7 +82,7 @@ def read_stories(file):
 
 def read_stories_val(file):
 
-    print("executing read stories validation")
+    #print("executing read stories validation")
 
     stories = []
 
@@ -106,7 +107,7 @@ def read_stories_tf (file):
 
 def read_and_embed_stories_val(file):
 
-    print('executing read_and_embed_stories_val')
+    #print('executing read_and_embed_stories_val')
 
     #create analyzer
     analyzer = SentimentIntensityAnalyzer()  #the analyzer is what does the embedding
@@ -181,12 +182,12 @@ def read_and_embed_stories(file):   # IN THE EMBEDDING WE HAVE [NEG, NEU, POS]
     return embedded_stories
 
 def read_embed_createtensor_from_file_stories(file):
-    print("executing read_embed_createtensor_from_file_stories")
+    #print("executing read_embed_createtensor_from_file_stories")
     stories_tens = tf.convert_to_tensor(read_and_embed_stories(file), dtype=tf.float32, name='stories_tens')
     return stories_tens
 
 def read_embed_createtensor_from_stories_val(file):
-    print("executing read_embed_createtensor_from_file_stories_val")
+    #print("executing read_embed_createtensor_from_file_stories_val")
     stories_tens = tf.convert_to_tensor(read_and_embed_stories_val(file), dtype=tf.float32, name='stories_tens')
     return stories_tens
 
