@@ -1,7 +1,11 @@
 ## Natural Language Understanding
 ## Project 2
 
-### Data Format
+
+
+### SCT absolute classification ```bert_sct.py/ipynb``` 
+
+#### Data Format
 
 Data format in ```./data_pp/```:
 * ```sct.train.tsv```
@@ -14,8 +18,7 @@ c9e0ad...5 |	0 |	 The football team ... scored. |	The crowd ... loudly. |	[-0.10
 
 Preprocessed data is obtained by running ```preprocess_data.py``` with initial data files stored in ```./data/```.
 
-
-### Run in training, evaluation and prediction mode
+#### RUN Mode
 
 Using tensorflow-hub module.
 ```
@@ -52,6 +55,37 @@ python bert_sct.py
 --bert_dir=./bert/ 
 --num_train_epochs=0.01
 ```
+
+### SCT relative classification ```bert_sct.py/ipynb``` 
+
+#### Data Format
+
+Data format in ```./data_pp/```:
+* ```sct_v2.train.tsv```
+* ```sct_v2.validation.tsv```
+* ```sct_v2.test.tsv```
+
+unique_id |	label |	text_a |	text_b _pos | text_b _neg |	vs_sent1 |	vs_sent2 |	vs_sent3 |	vs_sent4 |	vs_sent5_pos | vs_sent5_neg | cs_dist_pos | cs_dist_neg
+--- | ---- | ---- |---- |---- |---- |---- |---- |---- | --- | --- | --- | ---
+c...5 |	1 |	 The ... |	The ... | The ... |	[-0.1027  0.167   0.833   0.    ] |	[0.765 0.    0.577 0.423] |	[0. 0. 1. 0.] |	[0. 0. 1. 0.] |	[0. 0. 1. 0.] |	[0. 0. 1. 0.] | [1. 1. 1. 1.] | [-1. -1. -1. -1.]
+
+Preprocessed data is obtained by running ```preprocess_data.py``` with initial data files stored in ```./data/```.
+
+#### RUN Mode
+
+Using tensorflow-hub module.
+```
+python bert_sct.py 
+--data_dir=./data_pp/ 
+--output_dir="C:\Users\roksi\output" 
+--do_train=True 
+--do_eval=True 
+--do_predict=True 
+--bert_model_hub="https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1"
+```
+
+Using checkpoints, change accordingly as before.
+
 
 Local directory hierarchy.
 
