@@ -43,10 +43,7 @@ def read_examples(input_file, set_type):
         guid = "%s-%s" % (set_type, tokenization.convert_to_unicode(line[0]))
         S = split_on_punctuation(tokenization.convert_to_unicode(line[2]))[:4]
         e = tokenization.convert_to_unicode(line[3])
-        if set_type == "test":
-            label = "positive"
-        else:
-            label = tokenization.convert_to_unicode(line[1])
+        label = tokenization.convert_to_unicode(line[1])
         examples.append((guid, S, e, label))
     return examples
 
