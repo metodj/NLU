@@ -464,7 +464,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         output_layer_pos = model.get_pooled_output()  # (batch_size, 768)
 
-        model.__init__(
+        model = model.__init__(
             config=bert_config,
             is_training=is_training,
             input_ids=input_ids_neg,
@@ -590,7 +590,10 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
             for var in tvars:
-                tf.logging.info("  name = %s, shape = %s", var.name, var.shape)
+                init_string = ""
+                if "bert" in var.name and mode == tf.estimator.ModeKeys.TRAIN:
+                    init_string = ", *INIT_FROM_HUB*"
+                tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
         else:
             initialized_variable_names = {}

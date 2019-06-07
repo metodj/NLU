@@ -283,7 +283,7 @@ def file_based_convert_examples_to_features(examples, label_list, max_seq_length
     writer = tf.python_io.TFRecordWriter(output_file)
 
     for (ex_index, example) in enumerate(examples):
-        if ex_index % 100 == 0:
+        if ex_index % 1000 == 0:
             tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
         feature = convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer)
@@ -515,6 +515,11 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
 
         elif mode == tf.estimator.ModeKeys.EVAL:
 
+            label_ids_comb = label_ids[0::2]  # (batch_size/2, )
+
+            probabilities = tf.reverse(tf.reshape(probabilities[:, 1], shape=(-1, 2)), axis=[1])  # (batch_size/2, 2)
+            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)  # (batch_size/2, )
+
             def metric_fn(_per_example_loss, _label_ids, _predictions):
                 accuracy = tf.metrics.accuracy(labels=_label_ids, predictions=_predictions)
                 loss = tf.metrics.mean(values=_per_example_loss)
@@ -522,19 +527,21 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                 return {
                     "eval_accuracy": accuracy,
                     "eval_loss": loss,
-                    "f1": f1_score
+                    "f1": f1_score,
                 }
 
-            eval_metrics = metric_fn(per_example_loss, label_ids, predicted_labels)
+            eval_metrics = metric_fn(per_example_loss, label_ids_comb, predicted_labels)
             output_spec = tf.estimator.EstimatorSpec(mode=mode,
                                                      loss=loss,
                                                      eval_metric_ops=eval_metrics)
 
         else:
+            probabilities = tf.reverse(tf.reshape(probabilities[:, 1], shape=(-1, 2)), axis=[1])  # (batch_size/2, 2)
+            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)  # (batch_size/2, )
+
             predictions = {
                 'probabilities': probabilities,
-                "predict_labels": predicted_labels,
-                "target_labels": label_ids
+                "predict_labels": predicted_labels + 1,
             }
 
             output_spec = tf.estimator.EstimatorSpec(mode=mode,

@@ -120,7 +120,7 @@ class SctProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        lines = self._read_tsv(os.path.join(data_dir, "sct_v2.train.tsv"))
+        lines = self._read_tsv(os.path.join(data_dir, "sct_v3.train.tsv"))
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -154,7 +154,7 @@ class SctProcessor(DataProcessor):
 
     def get_dev_examples(self, data_dir):
         """See base class."""
-        lines = self._read_tsv(os.path.join(data_dir, "sct_v2.validation.tsv"))
+        lines = self._read_tsv(os.path.join(data_dir, "sct_v3.validation.tsv"))
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -192,7 +192,7 @@ class SctProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir):
         """See base class."""
-        lines = self._read_tsv(os.path.join(data_dir, "sct_v2.test.tsv"))
+        lines = self._read_tsv(os.path.join(data_dir, "sct_v3.test.tsv"))
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -590,7 +590,10 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
             for var in tvars:
-                tf.logging.info("  name = %s, shape = %s", var.name, var.shape)
+                init_string = ""
+                if "bert" in var.name:
+                    init_string = ", *INIT_FROM_HUB*"
+                tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
         else:
             initialized_variable_names = {}

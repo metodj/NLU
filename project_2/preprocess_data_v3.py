@@ -177,15 +177,15 @@ if __name__ == "__main__":
 
     # Load data
     data_train_val = pd.read_csv(os.path.join("data", "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
-    # data_train = pd.read_csv(os.path.join("data", "train_stories.csv"))
+    data_train = pd.read_csv(os.path.join("data", "train_stories.csv")).iloc[0:data_train_val.shape[0]]
 
     data_val = pd.read_csv(os.path.join("data", "test_for_report-stories_labels.csv"))
     data_test = pd.read_csv(os.path.join("data", "test-stories.csv"))
 
     # Training set: train + validation (fine-tuning)
-    # df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
+    df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
-    df_train = df_train_val
+    df_train = pd.concat([df_train, df_train_val], axis=0)
 
     # Validation set
     df_val = pp_data_val(data_val, sentiment=True, common_sense=True)

@@ -3,11 +3,12 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import datetime
 import tensorflow as tf
 from bert import tokenization
 
-from bert_sct_utils_v2 import create_tokenizer_from_hub_module, SctProcessor, get_config
-from bert_sct_utils_v2 import model_fn_builder, file_based_input_fn_builder, file_based_convert_examples_to_features
+from bert_sct_utils_v3 import create_tokenizer_from_hub_module, SctProcessor, get_config
+from bert_sct_utils_v3 import model_fn_builder, file_based_input_fn_builder, file_based_convert_examples_to_features
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -32,6 +33,9 @@ flags.DEFINE_integer("batch_size", 4, "Total batch size for training.")
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
 flags.DEFINE_float("num_train_epochs", 1.0, "Total number of training epochs to perform.")
 flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
+
+
+timestamp = datetime.datetime.now().strftime("%d_%H-%M")
 
 
 def main(_):
@@ -135,7 +139,7 @@ def main(_):
 
         result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
 
-        output_eval_file = os.path.join(FLAGS.results_dir, "eval_results.txt")
+        output_eval_file = os.path.join(FLAGS.results_dir, timestamp + "eval_results.txt")
         with tf.gfile.GFile(output_eval_file, "w") as writer:
             tf.logging.info("***** Eval results *****")
             for key in sorted(result.keys()):
@@ -164,7 +168,7 @@ def main(_):
 
         result = estimator.predict(input_fn=predict_input_fn)
 
-        output_predict_file = os.path.join(FLAGS.results_dir, "test_results.tsv")
+        output_predict_file = os.path.join(FLAGS.results_dir, timestamp + "test_results.tsv")
         with tf.gfile.GFile(output_predict_file, "w") as writer:
             num_written_lines = 0
             tf.logging.info("***** Predict results *****")
