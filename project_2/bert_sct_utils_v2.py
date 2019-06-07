@@ -295,7 +295,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
     # Common Sense Distances
     cs_dist = example.cs_dist
 
-    if ex_index < 1:
+    if ex_index < 2:
         tf.logging.info("*** Example ***")
         tf.logging.info("unique_id: %s" % example.guid)
         tf.logging.info("tokens: %s" % " ".join([tokenization.printable_text(x) for x in tokens]))
@@ -318,7 +318,7 @@ def file_based_convert_examples_to_features(examples, label_list, max_seq_length
     writer = tf.python_io.TFRecordWriter(output_file)
 
     for (ex_index, example) in enumerate(examples):
-        if ex_index % 100 == 0:
+        if ex_index % 1000 == 0:
             tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
         example.text_b = example.text_b_pos
@@ -491,22 +491,30 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
-    output_weights = tf.get_variable("output_weights", [1, hidden_size],
+    output_weights_n = tf.get_variable("output_weights", [1, hidden_size],
                                          initializer=tf.truncated_normal_initializer(stddev=0.02))
 
-    output_bias = tf.get_variable("output_bias", [1], initializer=tf.zeros_initializer())
+    output_bias_n = tf.get_variable("output_bias", [1], initializer=tf.zeros_initializer())
+
+    # LSTM
+    lstm_size = 64
+
+    lstm = tf.nn.rnn_cell.BasicLSTMCell(num_units=lstm_size, name="lstm_cell")
+    zero_state = lstm.zero_state(batch_size=batch_size, dtype=tf.float32)
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Loss
     with tf.variable_scope("loss"):
+
+        # Narrative
         if is_training:
             output_layer_pos = tf.nn.dropout(output_layer_pos, rate=0.1)
             output_layer_neg = tf.nn.dropout(output_layer_neg, rate=0.1)
 
         logits_pos = tf.nn.bias_add(tf.matmul(output_layer_pos,
-                                              output_weights, transpose_b=True), output_bias)  # (batch_size, 1)
+                                              output_weights_n, transpose_b=True), output_bias_n)  # (batch_size, 1)
         logits_neg = tf.nn.bias_add(tf.matmul(output_layer_neg,
-                                              output_weights, transpose_b=True), output_bias)  # (batch_size, 1)
+                                              output_weights_n, transpose_b=True), output_bias_n)  # (batch_size, 1)
 
         logits = tf.concat([logits_neg, logits_pos], axis=1)
 
@@ -613,11 +621,15 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
             def metric_fn(_per_example_loss, _label_ids, _predictions):
                 accuracy = tf.metrics.accuracy(labels=_label_ids, predictions=_predictions)
                 loss = tf.metrics.mean(values=_per_example_loss)
-                f1_score = tf.contrib.metrics.f1_score(_label_ids, _predictions)
+
+                recall = tf.metrics.recall(_label_ids, _predictions)
+                precision = tf.metrics.precision(_label_ids, _predictions)
+
                 return {
                     "eval_accuracy": accuracy,
                     "eval_loss": loss,
-                    "f1": f1_score
+                    "recall": recall,
+                    "precision": precision,
                 }
 
             eval_metrics = metric_fn(per_example_loss, label_ids_pos, predicted_labels)
@@ -628,8 +640,7 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         else:
             predictions = {
                 'probabilities': probabilities,
-                "predict_labels": predicted_labels,
-                "target_labels": label_ids_pos
+                "predict_labels": predicted_labels + 1,
             }
 
             output_spec = tf.estimator.EstimatorSpec(mode=mode,
