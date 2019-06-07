@@ -90,3 +90,44 @@ Using checkpoints, change accordingly as before.
 Local directory hierarchy.
 
 ![Local directory hierarchy.](./docs/dir.PNG?raw=false "Local directory hierarchy.")
+
+
+### Experiments
+
+#### Experiment A
+
+* Parameters
+    * BERT initialization: https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1
+    * Data: data_pp_test/
+    * Classification: Absolute
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: bert_sct.py
+
+* Performance
+    * eval_accuracy = 0.8522484
+    * eval_loss = 0.79642415
+    * f1 = 1.0
+    * global_step = 1403
+    * loss = 0.79642415
+    
+* Output
+    * Eval: 07_22-11eval_results.txt
+    * Test: 07_22-11test_results.tsv
+
+#### Experiment B
+
+* Parameters
+    * BERT initialization: ./bert_masked_lm_pp/model.ckpt
+    * Data: data_pp_test/
+    * Classification: Absolute
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: bert_sct.py
+    
+* Performance
+
+* Output
+    
+    
+

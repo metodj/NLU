@@ -200,62 +200,23 @@ if __name__ == "__main__":
     if not os.path.exists("data_pp_test"):
         os.makedirs("data_pp_test")
 
-    df_train_test = pd.concat([df_train.iloc[0:data_train_val.shape[0]], df_train.iloc[-data_train_val.shape[0]:]], axis=0)
+    df_train_test = pd.concat([df_train.iloc[0:data_train_val.shape[0]],
+                               df_train.iloc[-data_train_val.shape[0]:]], axis=0)
+
+    df_train_test = df_train_test.sample(frac=1.0, random_state=0).reset_index(drop=True)
 
     df_train_test.to_csv(os.path.join("data_pp_test", "sct_v2.train.tsv"), sep="\t", header=True, index=False)
     df_val.to_csv(os.path.join("data_pp_test", "sct_v2.validation.tsv"), sep="\t", header=True, index=False)
     df_test.to_csv(os.path.join("data_pp_test", "sct_v2.test.tsv"), sep="\t", header=True, index=False)
 
     # max_seq_len
-    # idx_a = list(df_train.columns).index("text_a")
-    # idx_b_pos = list(df_train.columns).index("text_b_pos")
-    # idx_b_neg = list(df_train.columns).index("text_b_neg")
-    #
-    # print("train_len", df_train.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_train.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
-    # print("val_len", df_val.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_val.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
-    # print("test_len", df_test.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_test.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
+    idx_a = list(df_train.columns).index("text_a")
+    idx_b_pos = list(df_train.columns).index("text_b_pos")
+    idx_b_neg = list(df_train.columns).index("text_b_neg")
 
-    # data_val = pd.read_csv(os.path.join("data", "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
-    # data_train = pd.read_csv(os.path.join("data", "train_stories.csv"))
-    #
-    #
-    #
-    #
-    #
-    # # Create dataframes
-    # df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
-    # df_val = pp_data_val(data_val, sentiment=True, common_sense=True)
-    # df_test = df_val[["unique_id", "label", "text_a", "text_b_pos", "text_b_neg",
-    #                   "vs_sent1", "vs_sent2", "vs_sent3", "vs_sent4",
-    #                   "vs_sent5_pos", "cs_dist_pos", "vs_sent5_neg", "cs_dist_neg"
-    #                   ]].sample(frac=0.5, random_state=0).reset_index(drop=True)
-    #
-    # # Save as .tsv
-    # # if not os.path.exists("data_pp"):
-    # #     os.makedirs("data_pp")
-    # #
-    # df_train.to_csv(os.path.join("data_pp", "sct_v2.train.tsv"), sep="\t", header=True, index=False)
-    # df_val.to_csv(os.path.join("data_pp", "sct_v2.validation.tsv"), sep="\t", header=True, index=False)
-    # df_test.to_csv(os.path.join("data_pp", "sct_v2.test.tsv"), sep="\t", header=True, index=False)
-    #
-    # if not os.path.exists("data_pp_test"):
-    #     os.makedirs("data_pp_test")
-    #
-    # df_val.iloc[0:1500].to_csv(os.path.join("data_pp_test", "sct_v2.train.tsv"), sep="\t", header=True, index=False)
-    # df_val.iloc[1500:].to_csv(os.path.join("data_pp_test", "sct_v2.validation.tsv"), sep="\t", header=True, index=False)
-    # df_test.to_csv(os.path.join("data_pp_test", "sct_v2.test.tsv"), sep="\t", header=True, index=False)
-    #
-    # # max_seq_len
-    # idx_a = list(df_train.columns).index("text_a")
-    # idx_b_pos = list(df_train.columns).index("text_b_pos")
-    # idx_b_neg = list(df_train.columns).index("text_b_neg")
-    #
-    # print("train_len", df_train.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_train.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
-    # print("val_len", df_val.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_val.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
-    # print("test_len", df_test.apply(lambda row: len(row[idx_a]), axis=1).max() +
-    #       df_test.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
+    print("train_len", df_train.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_train.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
+    print("val_len", df_val.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_val.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())
+    print("test_len", df_test.apply(lambda row: len(row[idx_a]), axis=1).max() +
+          df_test.apply(lambda row: max(len(row[idx_b_pos]), len(row[idx_b_neg])), axis=1).max())

@@ -487,7 +487,11 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Common Sense
-    # cs_dist = cs_dist  # (batch_size, 4)
+    cs_dist_neg = cs_dist_neg  # (batch_size, 4)
+    cs_dist_pos = cs_dist_pos  # (batch_size, 4)
+
+
+
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization

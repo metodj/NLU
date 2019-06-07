@@ -200,7 +200,10 @@ if __name__ == "__main__":
     if not os.path.exists("data_pp_test"):
         os.makedirs("data_pp_test")
 
-    df_train_test = df_train
+    df_train_test = pd.concat([df_train.iloc[0:data_train_val.shape[0]],
+                               df_train.iloc[-data_train_val.shape[0]:]], axis=0)
+
+    df_train_test = df_train_test.sample(frac=1.0, random_state=0).reset_index(drop=True)
 
     df_train_test.to_csv(os.path.join("data_pp_test", "sct_v3.train.tsv"), sep="\t", header=True, index=False)
     df_val.to_csv(os.path.join("data_pp_test", "sct_v3.validation.tsv"), sep="\t", header=True, index=False)
