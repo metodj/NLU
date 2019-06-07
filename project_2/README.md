@@ -147,8 +147,14 @@ Local directory hierarchy.
     * Main: ```bert_sct_v2.py```
 
 * Performance
+    * eval_accuracy = 0.8787554
+    * eval_loss = 0.41565925
+    * global_step = 1403
+    * loss = 0.41565925
+    * precision = 1.0
+    * recall = 0.8787554
 
 
 * Output
-    * Eval: ```07_22-39eval_results.txt```
-    * Test: ```07_22-39test_results.tsv```
+    * Eval: ```07_23-09eval_results.txt```
+    * Test: ```07_23-09test_results.tsv```
