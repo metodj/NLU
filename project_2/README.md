@@ -97,12 +97,12 @@ Local directory hierarchy.
 #### Experiment A
 
 * Parameters
-    * BERT initialization: https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1
-    * Data: data_pp_test/
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp_test/```
     * Classification: Absolute
     * Sentiment: NO
     * Common sense: NO
-    * Main: bert_sct.py
+    * Main: ```bert_sct.py```
 
 * Performance
     * eval_accuracy = 0.8522484
@@ -112,22 +112,43 @@ Local directory hierarchy.
     * loss = 0.79642415
     
 * Output
-    * Eval: 07_22-11eval_results.txt
-    * Test: 07_22-11test_results.tsv
+    * Eval: ```07_22-11eval_results.txt```
+    * Test: ```07_22-11test_results.tsv```
 
 #### Experiment B
 
 * Parameters
-    * BERT initialization: ./bert_masked_lm_pp/model.ckpt
-    * Data: data_pp_test/
+    * BERT initialization: ```./bert_masked_lm_pp/model.ckpt```
+    * Data: ```data_pp_test/```
     * Classification: Absolute
     * Sentiment: NO
     * Common sense: NO
-    * Main: bert_sct.py
+    * Main: ```bert_sct.py```
     
 * Performance
+    * eval_accuracy = 0.875803
+    * eval_loss = 0.88003385
+    * f1 = 1.0
+    * global_step = 1403
+    * loss = 0.88003385
 
 * Output
+    * Eval: ```07_22-39eval_results.txt```
+    * Test: ```07_22-39test_results.tsv```
     
-    
+#### Experiment C
 
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp_test/```
+    * Classification: Relative
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+
+
+* Output
+    * Eval: ```07_22-39eval_results.txt```
+    * Test: ```07_22-39test_results.tsv```
