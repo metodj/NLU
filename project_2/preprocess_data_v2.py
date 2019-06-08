@@ -176,7 +176,9 @@ if __name__ == "__main__":
     analyser = SentimentIntensityAnalyzer()
 
     # Load data
-    data_train_val = pd.read_csv(os.path.join("data", "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
+    data_train_val = pd.read_csv(os.path.join("data",
+                                              "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
+
     data_train = pd.read_csv(os.path.join("data", "train_stories.csv"))
 
     data_val = pd.read_csv(os.path.join("data", "test_for_report-stories_labels.csv"))
@@ -185,6 +187,9 @@ if __name__ == "__main__":
     # Training set: train + validation (fine-tuning)
     df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
+
+    df_train_val = pd.concat([df_train_val, df_train_val, df_train_val], axis=0)\
+        .sample(frac=1.0, random_state=0).reset_index(drop=True)
     df_train = pd.concat([df_train, df_train_val], axis=0)
 
     # Validation set
