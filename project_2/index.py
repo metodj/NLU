@@ -31,10 +31,10 @@ model = Model(initializer=tf.contrib.layers.xavier_initializer(),
               learning_rate=0.001,
               batch_size=8,
               max_grad_norm=5.0,
-              num_epochs=1,
+              num_epochs=3,
               num_epochs_sc=1,
               #sc_train_loss='AC'
-              sent_perc_train=0.80,
+              sent_perc_train=1.00,
               sc_perc_train=0.80,
               )
 
@@ -49,7 +49,7 @@ with tf.Session() as session:
     final_accuracy = 0.0
 
 
-    with open('experiments_final/experiments/experiment_3.txt', 'w') as result_file:
+    with open('experiments/experiment_0.txt', 'w') as result_file:
 
         result_file.write('\n\nDETAILS: ' + '\n\n' + \
                           'Batch size : ' + str(model.batch_size) + '\n' + \
@@ -109,6 +109,7 @@ with tf.Session() as session:
                 except tf.errors.OutOfRangeError:
                     break
 
+        '''
         for j in range(model.num_epochs_sc):
 
             # TRAINING STORY CLOZE TASK
@@ -163,6 +164,12 @@ with tf.Session() as session:
                     break
 
             result_file.write('\n\n' + 'ACCURACY TEST STORY CLOZE TASK EPOCH ' + str(j + 1) + '\n'+str(final_accuracy)+'\n\n')
+
+
+        '''
+
+        save_path = model.saver.save(session, "sentiment_pp/sentiment.ckpt")
+        result_file.write("Model saved in path " + str(save_path))
 
 
 

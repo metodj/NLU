@@ -11,9 +11,12 @@ setup(
         packages=find_packages(exclude=[]),
         python_requires='>=3.6',
         install_requires=[
-                'tensorflow',
+                'tensorflow-gpu==1.12.0',
                 'numpy',
                 'pandas',
-                'bert-tensorflow',
+                'bert-tensorflow==1.0.1',
+                'vaderSentiment',
+                'tensorflow-hub',
+                'nltk'
         ],
 )

@@ -73,15 +73,15 @@ class Model:
             self.iterator_val_op = iterator_val.make_initializer(valid_dataset)
 
         # Weights
-        with tf.name_scope("weights_initialization"):
+        with tf.name_scope("weights_initialization_s"):
 
-            self.output_weights = tf.get_variable("output_weights",shape=[self.state_dim,self.embedding_dim], initializer=self.initializer, trainable=True)
-            self.output_bias = tf.get_variable("output_bias",shape=self.embedding_dim, initializer=self.initializer, trainable=True)
+            self.output_weights_s = tf.get_variable("output_weights_s",shape=[self.state_dim,self.embedding_dim], initializer=self.initializer, trainable=True)
+            self.output_bias_s = tf.get_variable("output_bias_s",shape=self.embedding_dim, initializer=self.initializer, trainable=True)
 
             self.similarity_matrix = tf.get_variable("similarity_matrix",shape=[self.embedding_dim, self.embedding_dim],initializer=self.initializer, trainable=True)
 
 
-        with tf.name_scope('lstm'):
+        with tf.name_scope('lstm_s'):
 
             #to adjust dimension for last batch
             batch_size = tf.shape(self.x_batch)[0]
@@ -93,13 +93,13 @@ class Model:
 
             lstm_output, (state_c,state_h) = tf.nn.dynamic_rnn(cell=self.LSTM, inputs=self.x_batch, dtype=tf.float32)
 
-            logits_sent = tf.nn.softmax(tf.matmul(state_h,self.output_weights, name="output_multiplication")+self.output_bias)
+            probabilities_sent = tf.nn.softmax(tf.matmul(state_h,self.output_weights_s, name="output_multiplication")+self.output_bias_s)
 
 
 
         with tf.name_scope('cosine_sim_and_loss'):
 
-            self.cosine_sim = utils.cosine_similarity(logits_sent, self.y_batch)
+            self.cosine_sim = utils.cosine_similarity(probabilities_sent, self.y_batch)
 
             self.loss = -(tf.reduce_mean(self.cosine_sim))
 
@@ -108,7 +108,7 @@ class Model:
 
             lstm_output_sc, (state_c_sc, state_h_sc) = tf.nn.dynamic_rnn(cell=self.LSTM, inputs=self.s_batch, dtype=tf.float32)
 
-            self.e_p_batch = tf.nn.softmax(tf.matmul(state_h_sc, self.output_weights) + self.output_bias)
+            self.e_p_batch = tf.nn.softmax(tf.matmul(state_h_sc, self.output_weights_s) + self.output_bias_s)
 
             logits_1 = tf.linalg.diag_part(tf.matmul(tf.matmul(a=self.e_p_batch, b=self.similarity_matrix),self.e1_e_batch, transpose_b=True))
 
@@ -162,7 +162,9 @@ class Model:
                 self.optimize_sc_op = optimizer.minimize(self.acc_loss_sc, global_step=self.global_step)
             '''
 
+        with tf.name_scope('saver'):
 
+            self.saver = tf.train.Saver()
 '''
 
     def train_sentiment_model(self):
