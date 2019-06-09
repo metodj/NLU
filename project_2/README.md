@@ -146,69 +146,46 @@ Local directory hierarchy.
     * Eval: ```09_09-39eval_results.txt```
     * Test: ```09_09-39test_results.tsv```
 
-
-### OLD
-#### Experiment A
+#### Experiment C (FINAL)
 
 * Parameters
     * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
-    * Data: ```data_pp_test/```
+    * Data: ```data_pp_test/```     
     * Classification: Absolute
+    * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
     * Sentiment: NO
     * Common sense: NO
     * Main: ```bert_sct.py```
 
 * Performance
-    * eval_accuracy = 0.8522484
-    * eval_loss = 0.79642415
+    * eval_accuracy = 0.8581371
+    * eval_loss = 0.99690187
     * f1 = 1.0
     * global_step = 1403
-    * loss = 0.79642415
-    
-* Output
-    * Eval: ```07_22-11eval_results.txt```
-    * Test: ```07_22-11test_results.tsv```
+    * loss = 0.99690187
 
-#### Experiment B
+* Output
+    * Eval: ```09_10-20eval_results.txt```
+    * Test: ```09_10-20test_results.tsv```
+    
+#### Experiment C (FINAL)
 
 * Parameters
-    * BERT initialization: ```./bert_masked_lm_pp/model.ckpt```
-    * Data: ```data_pp_test/```
+    * BERT initialization: ```./bert_masked_lm_pp```
+    * Data: ```data_pp_test/```     
     * Classification: Absolute
+    * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
     * Sentiment: NO
     * Common sense: NO
     * Main: ```bert_sct.py```
-    
+
 * Performance
-    * eval_accuracy = 0.875803
-    * eval_loss = 0.88003385
+    * eval_accuracy = 0.8506424
+    * eval_loss = 1.0681794
     * f1 = 1.0
     * global_step = 1403
-    * loss = 0.88003385
+    * loss = 1.0681794
 
 * Output
-    * Eval: ```07_22-39eval_results.txt```
-    * Test: ```07_22-39test_results.tsv```
-    
-#### Experiment C
-
-* Parameters
-    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
-    * Data: ```data_pp_test/```
-    * Classification: Relative
-    * Sentiment: NO
-    * Common sense: NO
-    * Main: ```bert_sct_v2.py```
-
-* Performance
-    * eval_accuracy = 0.8787554
-    * eval_loss = 0.41565925
-    * global_step = 1403
-    * loss = 0.41565925
-    * precision = 1.0
-    * recall = 0.8787554
-
-
-* Output
-    * Eval: ```07_23-09eval_results.txt```
-    * Test: ```07_23-09test_results.tsv```
+    * Eval: ```09_11-18eval_results.txt```
+    * Test: ```09_11-18test_results.tsv```
