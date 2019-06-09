@@ -405,15 +405,17 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
     sentiment_answer = sentiment[:, -1, :]  # (batch_size, 4)
 
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Common Sense
-    # cs_dist = cs_dist  # (batch_size, 4)
-
-    # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
     output_weights = tf.get_variable("output_weights", [num_labels, hidden_size],
                                      initializer=tf.truncated_normal_initializer(stddev=0.02))
 
     output_bias = tf.get_variable("output_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    # Common sense
+    output_weights_cs = tf.get_variable("output_weights_cs", [num_labels, 4],
+                                     initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    output_bias_cs = tf.get_variable("output_bias_cs", [num_labels], initializer=tf.zeros_initializer())
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Loss
@@ -421,6 +423,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
         if is_training:
             output_layer = tf.nn.dropout(output_layer, rate=0.1)
 
+        # Narrative
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
 
@@ -428,6 +431,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
         log_probs = tf.nn.log_softmax(logits, axis=-1)
 
         one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
+
 
         predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
 
