@@ -94,6 +94,60 @@ Local directory hierarchy.
 
 ### Experiments
 
+#### Experiment A (FINAL)
+
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp_test/``` 
+  
+    ``` df_train_test = pd.concat([df_train_tmp.iloc[0:data_train_val.shape[0]], df_train.iloc[-data_train_val.shape[0]:]], axis=0)``` 
+    
+    * Classification: Relative
+    * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+    * eval_accuracy = 0.8787554
+    * eval_loss = 0.39823273
+    * global_step = 1403
+    * loss = 0.39823273
+    * precision = 1.0
+    * recall = 0.8787554
+
+* Output
+    * Eval: ```09_08-53eval_results.txt```
+    * Test: ```09_08-53test_results.tsv```
+    
+#### Experiment B (FINAL)
+
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp/``` 
+  
+    ``` df_train = df_train_val``` 
+    
+    * Classification: Relative
+    * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+    * eval_accuracy = 0.86212444
+    * eval_loss = 0.51910084
+    * global_step = 701
+    * loss = 0.51910084
+    * precision = 1.0
+    * recall = 0.86212444
+
+* Output
+    * Eval: ```09_09-39eval_results.txt```
+    * Test: ```09_09-39test_results.tsv```
+
+
+### OLD
 #### Experiment A
 
 * Parameters
