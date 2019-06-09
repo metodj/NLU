@@ -479,11 +479,58 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Sentiment
-    sentiment_context_pos = sentiment_pos[:, 0:-1, :]  # (batch_size, 4, 4)
-    sentiment_answer_pos = sentiment_pos[:, -1, :]  # (batch_size, 4)
+    
+    sentiment_context = sentiment_pos[:, 0:-1, 1:]  # (batch_size, 4, 3)
+    sentiment_answer_pos = sentiment_pos[:, -1, 1:]  # (batch_size, 1, 3)
+    # sentiment_context_neg = sentiment_neg[:, 0:-1, 1:]  # (batch_size, 4, 3)
+    sentiment_answer_neg = sentiment_neg[:, -1, 1:]  # (batch_size, 1, 3)
 
-    sentiment_context_neg = sentiment_neg[:, 0:-1, :]  # (batch_size, 4, 4)
-    sentiment_answer_neg = sentiment_neg[:, -1, :]  # (batch_size, 4)
+    hidden_state_dim_sent = 64    
+    batch_size_sent = 8
+    emb_dim_sent = tf.shape(sentiment_context)[2]      # should be 3
+    sentiment_weights_init = tf.contrib.layers.xavier_initializer()
+
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Weights initialization Sentiment
+    with tf.name_scope("weights_initialization_s"):
+
+        output_weights_s = tf.get_variable("output_weights_s", shape=[hidden_state_dim_sent, emb_dim_sent],
+                                                initializer=sentiment_weights_init, trainable=True)
+        output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent, initializer=sentiment_weights_init,
+                                             trainable=True)
+
+        similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
+                                                 initializer=sentiment_weights_init, trainable=True)
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # LSTM Sentiment (story cloze fine tuning)
+
+    with tf.name_scope('lstm_s'):
+
+        # to adjust dimension for last batch
+        batch_size_sent = tf.shape(sentiment_context)[0]
+
+        # LSTM Cell  : is it correct the number of units?
+        LSTM_s = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_state_dim_sent, name="lstm_cell_s")
+
+        # state_c_s, state_h_s = LSTM_s.zero_state(batch_size=batch_size_sent, dtype=tf.float32)
+        # SHOULD THIS BE INCLUDED?
+
+    with tf.name_scope('fine_tuning_story_cloze'):
+
+        lstm_output_sent, (state_c_s, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
+                                                                     dtype=tf.float32)
+
+        e_p = tf.nn.softmax(tf.matmul(state_h_s, output_weights_s) + output_bias_s)
+
+        logits_pos = tf.linalg.diag_part(
+            tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_pos, transpose_b=True))
+
+        logits_neg = tf.linalg.diag_part(
+            tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
+
+        logits_sent = tf.stack([logits_1, logits_2], axis=1)
+
+    # TO BE COMPLETED
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Common Sense
@@ -491,10 +538,8 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     cs_dist_pos = cs_dist_pos  # (batch_size, 4)
 
 
-
-
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Weight initialization
+    # Weight initialization n
     output_weights_n = tf.get_variable("output_weights", [1, hidden_size],
                                          initializer=tf.truncated_normal_initializer(stddev=0.02))
 
