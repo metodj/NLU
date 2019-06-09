@@ -188,9 +188,9 @@ if __name__ == "__main__":
     df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
 
-    df_train_val = pd.concat([df_train_val, df_train_val, df_train_val], axis=0)\
-        .sample(frac=1.0, random_state=0).reset_index(drop=True)
-    df_train = pd.concat([df_train, df_train_val], axis=0)
+    df_train_val = pd.concat([df_train_val, df_train_val, df_train_val], axis=0)
+
+    df_train = pd.concat([df_train, df_train_val, df_train_val, df_train_val], axis=0)
 
     # Validation set
     df_val = pp_data_val(data_val, sentiment=True, common_sense=True)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         os.makedirs("data_pp_test")
 
     df_train_test = pd.concat([df_train.iloc[0:data_train_val.shape[0]],
-                               df_train.iloc[-data_train_val.shape[0]:]], axis=0)
+                               df_train_val], axis=0)
 
     df_train_test = df_train_test.sample(frac=1.0, random_state=0).reset_index(drop=True)
 

@@ -410,10 +410,10 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
-    output_weights = tf.get_variable("rs_output_weights", [num_labels, hidden_size],
+    output_weights = tf.get_variable("output_weights", [num_labels, hidden_size],
                                      initializer=tf.truncated_normal_initializer(stddev=0.02))
 
-    output_bias = tf.get_variable("rs_output_bias", [num_labels], initializer=tf.zeros_initializer())
+    output_bias = tf.get_variable("output_bias", [num_labels], initializer=tf.zeros_initializer())
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Loss
