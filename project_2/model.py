@@ -78,6 +78,7 @@ class Model:
             self.output_weights_s = tf.get_variable("output_weights_s",shape=[self.state_dim,self.embedding_dim], initializer=self.initializer, trainable=True)
             self.output_bias_s = tf.get_variable("output_bias_s",shape=self.embedding_dim, initializer=self.initializer, trainable=True)
 
+        with tf.name_scope('similarity_matrix_s'):
             self.similarity_matrix = tf.get_variable("similarity_matrix",shape=[self.embedding_dim, self.embedding_dim],initializer=self.initializer, trainable=True)
 
 
@@ -87,11 +88,11 @@ class Model:
             batch_size = tf.shape(self.x_batch)[0]
 
             # LSTM Cell  : is it correct the number of units?
-            self.LSTM = tf.nn.rnn_cell.BasicLSTMCell(num_units=self.state_dim, name="lstm_cell")
+            self.LSTM_s = tf.nn.rnn_cell.BasicLSTMCell(num_units=self.state_dim, name="lstm_cell_s")
 
-            state_c,state_h = self.LSTM.zero_state(batch_size=batch_size, dtype=tf.float32)
+            state_c,state_h = self.LSTM_s.zero_state(batch_size=batch_size, dtype=tf.float32)
 
-            lstm_output, (state_c,state_h) = tf.nn.dynamic_rnn(cell=self.LSTM, inputs=self.x_batch, dtype=tf.float32)
+            lstm_output, (state_c,state_h) = tf.nn.dynamic_rnn(cell=self.LSTM_s, inputs=self.x_batch, dtype=tf.float32)
 
             probabilities_sent = tf.nn.softmax(tf.matmul(state_h,self.output_weights_s, name="output_multiplication")+self.output_bias_s)
 
@@ -106,7 +107,7 @@ class Model:
 
         with tf.name_scope('fine_tuning_story_cloze'):
 
-            lstm_output_sc, (state_c_sc, state_h_sc) = tf.nn.dynamic_rnn(cell=self.LSTM, inputs=self.s_batch, dtype=tf.float32)
+            lstm_output_sc, (state_c_sc, state_h_sc) = tf.nn.dynamic_rnn(cell=self.LSTM_s, inputs=self.s_batch, dtype=tf.float32)
 
             self.e_p_batch = tf.nn.softmax(tf.matmul(state_h_sc, self.output_weights_s) + self.output_bias_s)
 

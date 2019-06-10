@@ -49,7 +49,7 @@ with tf.Session() as session:
     final_accuracy = 0.0
 
 
-    with open('experiments/experiment_0.txt', 'w') as result_file:
+    with open('experiments/experiment0.txt', 'w') as result_file:
 
         result_file.write('\n\nDETAILS: ' + '\n\n' + \
                           'Batch size : ' + str(model.batch_size) + '\n' + \
@@ -168,7 +168,7 @@ with tf.Session() as session:
 
         '''
 
-        save_path = model.saver.save(session, "sentiment_pp/sentiment.ckpt")
+        save_path = model.saver.save(session, "sentiment_pp/sentiment_0.ckpt")
         result_file.write("Model saved in path " + str(save_path))
 
 

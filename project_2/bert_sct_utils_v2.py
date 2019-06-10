@@ -479,7 +479,9 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Sentiment
-    
+
+    # two context vectors are not necessary, are they?
+
     sentiment_context = sentiment_pos[:, 0:-1, 1:]  # (batch_size, 4, 3)
     sentiment_answer_pos = sentiment_pos[:, -1, 1:]  # (batch_size, 1, 3)
     # sentiment_context_neg = sentiment_neg[:, 0:-1, 1:]  # (batch_size, 4, 3)
@@ -498,9 +500,17 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
                                                 initializer=sentiment_weights_init, trainable=True)
         output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent, initializer=sentiment_weights_init,
                                              trainable=True)
+    with tf.name_scope('similarity_matrix_s'): # this is not the same namescope as the Emanuele code
 
         similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
                                                  initializer=sentiment_weights_init, trainable=True)
+    # ---------------------------------------------------------------------------------------------------------------- #
+    # Weights combining probabilities
+
+    with tf.name_scope('weights_combining_probabilities'):
+
+        w_comb_probs = tf.get_variable(name='w_comb_probs', shape=[], initializer=tf.constant_initializer(value=0.3),
+                                       dtype=tf.float32, trainable=True)
     # ---------------------------------------------------------------------------------------------------------------- #
     # LSTM Sentiment (story cloze fine tuning)
 
@@ -528,15 +538,16 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         logits_neg = tf.linalg.diag_part(
             tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
 
-        logits_sent = tf.stack([logits_1, logits_2], axis=1)
+        # in Emanuele code they are stacked in the other order, but it shouldn't be a problem for the checkpoint
+        logits_sent = tf.stack([logits_neg, logits_pos], axis=1)
 
-    # TO BE COMPLETED
+        probs_sent = tf.nn.softmax(logits_sent, axis=-1)
+        log_probs_sent = tf.nn.log_softmax(logits_sent, axis=-1)   # shape (8,2)
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Common Sense
     cs_dist_neg = cs_dist_neg  # (batch_size, 4)
     cs_dist_pos = cs_dist_pos  # (batch_size, 4)
-
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization n
@@ -570,11 +581,16 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
 
+        combined_probs_logits = tf.add(probabilities, tf.scalar_mul(w_comb_probs, probs_sent, name='sentiment_weight_mult'),name='sum_weighted_probs')
+        combined_probs = tf.nn.softmax(combined_probs_logits, axis=-1)
+        combined_log_probs = tf.nn.log_softmax(combined_probs, axis=-1)
+
         one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
 
-        predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
+        predicted_labels = tf.argmax(combined_log_probs, axis=-1, output_type=tf.int32)
 
-        per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+        per_example_loss = -tf.reduce_sum(one_hot_labels * combined_log_probs, axis=-1)
+
         loss = tf.reduce_mean(per_example_loss)
 
         tf.logging.info("logits_pos, shape = %s" % logits_pos.shape)  # (batch_size, 1)
@@ -591,7 +607,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         return loss, per_example_loss, logits, probabilities, predicted_labels
 
 
-def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate,
+def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, init_checkpoint_sent, num_labels, learning_rate,
                      num_train_steps, num_warmup_steps):
     """Returns `model_fn` closure for Estimator."""
 
@@ -657,7 +673,27 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                 if var.name in initialized_variable_names:
                     init_string = ", *INIT_FROM_CKPT*"
                 tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Initialize Sentiment
 
+        tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
+        tvars_LSTM_w_sent_1 = tf.trainable_variables(scope='lstm_s')
+        tvars_LSTM_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')   # don't know if necessary
+
+        tvars_sent = tvars_output_w_sent + tvars_LSTM_w_sent_1 + tvars_LSTM_w_sent_2
+
+        initialized_variable_names_sent = {}
+
+        if init_checkpoint_sent:
+            (assignment_map_sent, initialized_variable_names_sent) = modeling.get_assignment_map_from_checkpoint(tvars_sent, init_checkpoint_sent)
+            tf.train.init_from_checkpoint(init_checkpoint_sent, assignment_map_sent)
+
+        tf.logging.info("**** Trainable Variables Sentiment ****")
+        for var in tvars_sent:
+            init_string = ""
+            if var.name in initialized_variable_names_sent:
+                init_string = ", *INIT_FROM_CKPT*"
+            tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
         # ------------------------------------------------------------------------------------------------------------ #
         # Mode
         if mode == tf.estimator.ModeKeys.TRAIN:
