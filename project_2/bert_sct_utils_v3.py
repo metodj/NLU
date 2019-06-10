@@ -530,6 +530,9 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     cs_dist_neg = cs_dist_neg  # (batch_size, 4)
     cs_dist_pos = cs_dist_pos  # (batch_size, 4)
 
+
+
+
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
     output_weights_n = tf.get_variable("output_weights", [1, hidden_size],
@@ -553,15 +556,20 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         logits = tf.concat([logits_neg, logits_pos], axis=1)
 
-        probabilities = tf.nn.softmax(logits, axis=-1)
-        log_probs = tf.nn.log_softmax(logits, axis=-1)
+        probabilities_n = tf.nn.softmax(logits, axis=-1)
+        log_probs_n = tf.nn.log_softmax(logits, axis=-1)
+
+
 
         # Prediction
         one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
 
-        predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
 
-        # Loss
+        probabilities = tf.multiply(probabilities_n, probabilities_s)
+
+        # predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
+        predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)
+
         per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
         loss = tf.reduce_mean(per_example_loss)
 
