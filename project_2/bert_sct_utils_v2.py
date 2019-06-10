@@ -632,12 +632,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         # Prediction
         one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
-
-        if combo:
-            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)
-        else:
-            predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
-
+        predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
 
         # Loss
         per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
