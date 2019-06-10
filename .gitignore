@@ -3,6 +3,7 @@
 ################################################################################
 
 /.vs
+/project_2/.vs
 /project_2/bert_cloze/.vs
 /project_2/commonsense/.vs
 /project_2/commonsense/__pycache__
