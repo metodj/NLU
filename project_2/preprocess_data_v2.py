@@ -244,8 +244,6 @@ def read_numberbatch(input_file):
         for (i, line) in enumerate(file):
             if i == 0:
                 continue
-            if i == 10:
-                break
 
             line = line.split(" ")
             word = line[0]
