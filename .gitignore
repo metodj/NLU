@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/project_2/bert_cloze/.vs
+/project_2/commonsense/.vs
+/project_2/commonsense/__pycache__
+/project_2/commonsense/commonsense.pyproj.user
