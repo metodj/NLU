@@ -229,7 +229,7 @@ if __name__ == "__main__":
     df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
 
-    # df_train = pd.concat([df_train, df_train_val], axis=0)
+    # df_train = pd.concat([df_train, df_train_val, df_train_val, df_train_val], axis=0)
 
     df_train_tmp = df_train.copy()
     df_train = df_train_val

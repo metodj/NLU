@@ -168,7 +168,7 @@ Local directory hierarchy.
     * Eval: ```09_10-20eval_results.txt```
     * Test: ```09_10-20test_results.tsv```
     
-#### Experiment C (FINAL)
+#### Experiment D (FINAL)
 
 * Parameters
     * BERT initialization: ```./bert_masked_lm_pp```
@@ -189,3 +189,51 @@ Local directory hierarchy.
 * Output
     * Eval: ```09_11-18eval_results.txt```
     * Test: ```09_11-18test_results.tsv```
+    
+#### Experiment E (FINAL)
+
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp/``` TS1 Full     
+    * Classification: Absolute
+    * ```num_epochs = 1.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+    * eval_accuracy = 0.7988197
+    * eval_loss = 0.51480865
+    * global_step = 11721
+    * loss = 0.51480865
+    * precision = 1.0
+    * recall = 0.7988197
+
+* Output
+    * Eval: ```09_22-09eval_results.txt```
+    * Test: ```09_22-09test_results.tsv```
+    
+
+#### Experiment F (FINAL)
+
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp/``` TS1 Training only     
+    * Classification: Absolute
+    * ```num_epochs = 1.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+    * eval_accuracy = 0.5767167
+    * eval_loss = 0.6829421
+    * global_step = 0
+    * loss = 0.6829421
+    * precision = 1.0
+    * recall = 0.5767167
+
+* Output
+    * Eval: ```10_04-38eval_results.txt```
+    * Test: ```10_04-38test_results.tsv``` 
+
