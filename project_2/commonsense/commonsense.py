@@ -1,9 +1,14 @@
 import tokenization
 import csv
 import re
-from scipy import spatial
+import numpy as np
+import nltk
+
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 
 numberbatch_vectors = []
+stoplist = []
 
 def run():
     bert_dir = "..\\..\\..\\bert-master\\data\\data_pp\\"
@@ -25,6 +30,12 @@ def run():
     # This takes 4 GB of memory, but does not require a pandas or pytables installation.
     global numberbatch_vectors
     numberbatch_vectors = read_numberbatch(numberbatch_file)
+
+    nltk.download('stopwords')
+    nltk.download('punkt')
+
+    global stoplist
+    stoplist = stopwords.words('english')
 
     # Expected input format: id \t label \t text_a (s1..s4) \t text_b (e) 
     # Expected input format for Cloze: id,s1,s2,s3,s4,e1,e2,answer
@@ -54,14 +65,12 @@ def read_examples(input_file, set_type, cloze_format = False):
 
         if cloze_format:
             # Parse Cloze format.
-            # TODO: Tokenize, delete stop words using NLTK/CoreNLP
             guid = "%s-%s" % (set_type, tokenization.convert_to_unicode(line[0]))
             S = [tokenization.convert_to_unicode(l) for l in line[1:5]]
             E = [tokenization.convert_to_unicode(l) for l in line[5:7]]
             answer = line[7]
             examples.append((guid, S, E, answer))
         else:
-            # TODO: Tokenize, delete stop words using NLTK/CoreNLP
             guid = "%s-%s" % (set_type, tokenization.convert_to_unicode(line[0]))
             S = split_on_punctuation(tokenization.convert_to_unicode(line[2]))[:4]
             E = [tokenization.convert_to_unicode(line[3])]
@@ -96,12 +105,18 @@ def split_on_punctuation(sentences):
     return [s.strip() for s in re.split(r"[\.!?]", sentences) if s.strip() != ""]
 
 def tokenize(sentence):
-    # TODO: Tokenize, remove stopwords using NLTK/CoreNLP
-    return sentence.strip().lower().split(" ");
+    # Tokenize
+    words = nltk.word_tokenize(sentence)
+    # Remove stopwords
+    words = [w for w in words if w not in stoplist]
+
+    return words
 
 def stem(word):
-    # TODO: Stem word
-    return word
+    stemmer = SnowballStemmer('english')
+
+    stem = stemmer.stem(word)
+    return stem
 
 # Vectors
 # -------
@@ -133,8 +148,8 @@ def cosine_similarity(word1, word2):
     if not vector1 or not vector2:
         return 0
 
-    distance = spatial.distance.cosine(vector1, vector2)
-    return 1 - distance
+    similarity = np.dot(vector1, vector2)/(np.linalg.norm(vector1) * np.linalg.norm(vector2))
+    return similarity
 
 # Main
 # ----
