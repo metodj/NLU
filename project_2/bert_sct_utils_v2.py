@@ -522,9 +522,6 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         logits_neg = tf.linalg.diag_part(
             tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
 
-        print("------------------------ja------------------------------")
-        print(logits_neg.shape)
-        print(logits_pos.shape)
 
         # logits_s = tf.concat([logits_neg, logits_pos], axis=1)
         logits_s = tf.stack([logits_neg, logits_pos], axis=1)
@@ -659,7 +656,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
 
 def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate,
-                     num_train_steps, num_warmup_steps, sentiment_only, commonsense_only, combo):
+                     num_train_steps, num_warmup_steps, sentiment_only, commonsense_only, combo, init_checkpoint_sent):
     """Returns `model_fn` closure for Estimator."""
 
     def model_fn(features, labels, mode, params):
@@ -727,6 +724,28 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                 if var.name in initialized_variable_names:
                     init_string = ", *INIT_FROM_CKPT*"
                 tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
+
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Initialize Sentiment
+        tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
+        tvars_LSTM_w_sent_1 = tf.trainable_variables(scope='lstm_s')
+        tvars_LSTM_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')  # don't know if necessary
+
+        tvars_sent = tvars_output_w_sent + tvars_LSTM_w_sent_1 + tvars_LSTM_w_sent_2
+
+        initialized_variable_names_sent = {}
+
+        if init_checkpoint_sent:
+            (assignment_map_sent, initialized_variable_names_sent) = modeling.get_assignment_map_from_checkpoint(
+                tvars_sent, init_checkpoint_sent)
+            tf.train.init_from_checkpoint(init_checkpoint_sent, assignment_map_sent)
+
+        tf.logging.info("**** Trainable Variables Sentiment ****")
+        for var in tvars_sent:
+            init_string = ""
+            if var.name in initialized_variable_names_sent:
+                init_string = ", *INIT_FROM_CKPT*"
+            tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Mode
