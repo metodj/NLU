@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import datetime
 import tensorflow as tf
 from bert import tokenization
 
@@ -32,6 +33,9 @@ flags.DEFINE_integer("batch_size", 4, "Total batch size for training.")
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
 flags.DEFINE_float("num_train_epochs", 1.0, "Total number of training epochs to perform.")
 flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
+
+
+timestamp = datetime.datetime.now().strftime("%d_%H-%M")
 
 
 def main(_):
@@ -135,7 +139,7 @@ def main(_):
 
         result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
 
-        output_eval_file = os.path.join(FLAGS.results_dir, "eval_results.txt")
+        output_eval_file = os.path.join(FLAGS.results_dir, timestamp + "eval_results.txt")
         with tf.gfile.GFile(output_eval_file, "w") as writer:
             tf.logging.info("***** Eval results *****")
             for key in sorted(result.keys()):
@@ -164,18 +168,17 @@ def main(_):
 
         result = estimator.predict(input_fn=predict_input_fn)
 
-        output_predict_file = os.path.join(FLAGS.results_dir, "test_results.tsv")
+        output_predict_file = os.path.join(FLAGS.results_dir, timestamp + "test_results.tsv")
         with tf.gfile.GFile(output_predict_file, "w") as writer:
             num_written_lines = 0
             tf.logging.info("***** Predict results *****")
             for (i, prediction) in enumerate(result):
                 probabilities = prediction["probabilities"]
                 predict_label = str(prediction["predict_labels"])
-                target_label = str(prediction["target_labels"])
 
                 probs = ["{0:.4f}".format(class_probability) for class_probability in probabilities]
 
-                output_line = "\t".join(probs) + "\t" + target_label + "\t" + predict_label + "\n"
+                output_line = "\t".join(probs) + "\t" + predict_label + "\n"
                 writer.write(output_line)
                 num_written_lines += 1
 
@@ -184,3 +187,6 @@ if __name__ == "__main__":
     flags.mark_flag_as_required("data_dir")
     flags.mark_flag_as_required("output_dir")
     tf.app.run()
+
+
+

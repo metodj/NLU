@@ -283,7 +283,7 @@ def file_based_convert_examples_to_features(examples, label_list, max_seq_length
     writer = tf.python_io.TFRecordWriter(output_file)
 
     for (ex_index, example) in enumerate(examples):
-        if ex_index % 100 == 0:
+        if ex_index % 1000 == 0:
             tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
         feature = convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer)
@@ -405,15 +405,17 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
     sentiment_answer = sentiment[:, -1, :]  # (batch_size, 4)
 
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Common Sense
-    # cs_dist = cs_dist  # (batch_size, 4)
-
-    # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
-    output_weights = tf.get_variable("rs_output_weights", [num_labels, hidden_size],
+    output_weights = tf.get_variable("output_weights", [num_labels, hidden_size],
                                      initializer=tf.truncated_normal_initializer(stddev=0.02))
 
-    output_bias = tf.get_variable("rs_output_bias", [num_labels], initializer=tf.zeros_initializer())
+    output_bias = tf.get_variable("output_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    # Common sense
+    output_weights_cs = tf.get_variable("output_weights_cs", [num_labels, 4],
+                                     initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    output_bias_cs = tf.get_variable("output_bias_cs", [num_labels], initializer=tf.zeros_initializer())
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Loss
@@ -421,6 +423,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training, input
         if is_training:
             output_layer = tf.nn.dropout(output_layer, rate=0.1)
 
+        # Narrative
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         logits = tf.nn.bias_add(logits, output_bias)
 
@@ -487,7 +490,10 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
             for var in tvars:
-                tf.logging.info("  name = %s, shape = %s", var.name, var.shape)
+                init_string = ""
+                if "bert" in var.name and mode == tf.estimator.ModeKeys.TRAIN:
+                    init_string = ", *INIT_FROM_HUB*"
+                tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
 
         else:
             initialized_variable_names = {}
@@ -515,6 +521,11 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
 
         elif mode == tf.estimator.ModeKeys.EVAL:
 
+            label_ids_comb = label_ids[0::2]  # (batch_size/2, )
+
+            probabilities = tf.reverse(tf.reshape(probabilities[:, 1], shape=(-1, 2)), axis=[1])  # (batch_size/2, 2)
+            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)  # (batch_size/2, )
+
             def metric_fn(_per_example_loss, _label_ids, _predictions):
                 accuracy = tf.metrics.accuracy(labels=_label_ids, predictions=_predictions)
                 loss = tf.metrics.mean(values=_per_example_loss)
@@ -522,19 +533,21 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                 return {
                     "eval_accuracy": accuracy,
                     "eval_loss": loss,
-                    "f1": f1_score
+                    "f1": f1_score,
                 }
 
-            eval_metrics = metric_fn(per_example_loss, label_ids, predicted_labels)
+            eval_metrics = metric_fn(per_example_loss, label_ids_comb, predicted_labels)
             output_spec = tf.estimator.EstimatorSpec(mode=mode,
                                                      loss=loss,
                                                      eval_metric_ops=eval_metrics)
 
         else:
+            probabilities = tf.reverse(tf.reshape(probabilities[:, 1], shape=(-1, 2)), axis=[1])  # (batch_size/2, 2)
+            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)  # (batch_size/2, )
+
             predictions = {
                 'probabilities': probabilities,
-                "predict_labels": predicted_labels,
-                "target_labels": label_ids
+                "predict_labels": predicted_labels + 1,
             }
 
             output_spec = tf.estimator.EstimatorSpec(mode=mode,

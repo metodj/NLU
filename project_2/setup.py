@@ -16,6 +16,7 @@ setup(
                 'pandas',
                 'bert-tensorflow==1.0.1',
                 'vaderSentiment',
-                'tensorflow-hub'
+                'tensorflow-hub',
+                'nltk'
         ],
 )
