@@ -530,6 +530,23 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     cs_dist_neg = cs_dist_neg  # (batch_size, 4)
     cs_dist_pos = cs_dist_pos  # (batch_size, 4)
 
+
+    with tf.name_scope('commonsense'):
+
+        output_weights_c = tf.get_variable("output_weights_c", [1,4],
+                                           initializer=tf.truncated_normal_initializer(stddev=0.02))
+        output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
+
+        logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
+                                              output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+        logits_neg_c = tf.nn.bias_add(tf.matmul(cs_dist_neg,
+                                              output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+
+        logits_c = tf.concat([logits_neg_c, logits_pos_c], axis=1)
+
+        probabilities_c = tf.nn.softmax(logits_c, axis=-1)
+
+
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization
     output_weights_n = tf.get_variable("output_weights", [1, hidden_size],
