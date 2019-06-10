@@ -13,10 +13,10 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
     cols = list(df.columns)
 
     def pp_text_a(row):
-        text_a = [row[cols.index("InputSentence1")], \
-                  row[cols.index("InputSentence2")], \
-                  row[cols.index("InputSentence3")], \
-                  row[cols.index("InputSentence4")]]
+        text_a = [row[cols.index("sentence1")], \
+                  row[cols.index("sentence2")], \
+                  row[cols.index("sentence3")], \
+                  row[cols.index("sentence4")]]
         return text_a
 
     def pp_text_b_pos(row):
