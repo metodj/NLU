@@ -435,7 +435,8 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
 # Model loaders
 def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
                  input_ids_pos, input_ids_neg, input_mask_pos, input_mask_neg, segment_ids_pos, segment_ids_neg,
-                 labels_pos, labels_neg, sentiment_pos, sentiment_neg, cs_dist_pos, cs_dist_neg, num_labels):
+                 labels_pos, labels_neg, sentiment_pos, sentiment_neg, cs_dist_pos, cs_dist_neg, num_labels,
+                    sentiment_only, commonsense_only, combo):
     """Creates a classification model."""
 
     # ---------------------------------------------------------------------------------------------------------------- #
@@ -524,6 +525,31 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
 
+        if sentiment_only:
+            log_probs_s = tf.nn.log_softmax(logits_s, axis=-1)
+
+            # Prediction
+            one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
+
+            predicted_labels = tf.argmax(log_probs_s, axis=-1, output_type=tf.int32)
+
+            # Loss
+            per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_s, axis=-1)
+            loss = tf.reduce_mean(per_example_loss)
+            #
+            # tf.logging.info("logits_pos, shape = %s" % logits_pos.shape)  # (batch_size, 1)
+            # tf.logging.info("logits_neg, shape = %s" % logits_neg.shape)  # (batch_size, 1)
+            # tf.logging.info("logits, shape = %s" % logits_s.shape)  # (batch_size, num_labels)
+            #
+            # tf.logging.info("probabilities, shape = %s" % probabilities_s.shape)  # (batch_size, num_labels)
+            # tf.logging.info("log_probs, shape = %s" % log_probs_s.shape)  # (batch_size, num_labels)
+            # tf.logging.info("one_hot_labels, shape = %s" % one_hot_labels.shape)  # (batch_size, num_labels)
+            # tf.logging.info("predicted_labels, shape = %s" % predicted_labels.shape)  # (batch_size, )
+            # tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
+            # tf.logging.info("loss, shape = %s" % loss.shape)
+
+            return loss, per_example_loss, logits, probabilities, predicted_labels
+
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Common Sense
@@ -545,6 +571,32 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         logits_c = tf.concat([logits_neg_c, logits_pos_c], axis=1)
 
         probabilities_c = tf.nn.softmax(logits_c, axis=-1)
+
+        if commonsense_only:
+
+            log_probs_c = tf.nn.log_softmax(logits_c, axis=-1)
+
+            # Prediction
+            one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
+
+            predicted_labels = tf.argmax(log_probs_c, axis=-1, output_type=tf.int32)
+
+            # Loss
+            per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_c, axis=-1)
+            loss = tf.reduce_mean(per_example_loss)
+            #
+            # tf.logging.info("logits_pos, shape = %s" % logits_pos_c.shape)  # (batch_size, 1)
+            # tf.logging.info("logits_neg, shape = %s" % logits_neg_c.shape)  # (batch_size, 1)
+            # tf.logging.info("logits, shape = %s" % logits_c.shape)  # (batch_size, num_labels)
+            #
+            # tf.logging.info("probabilities, shape = %s" % probabilities_c.shape)  # (batch_size, num_labels)
+            # tf.logging.info("log_probs, shape = %s" % log_probs_c.shape)  # (batch_size, num_labels)
+            # tf.logging.info("one_hot_labels, shape = %s" % one_hot_labels.shape)  # (batch_size, num_labels)
+            # tf.logging.info("predicted_labels, shape = %s" % predicted_labels.shape)  # (batch_size, )
+            # tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
+            # tf.logging.info("loss, shape = %s" % loss.shape)
+
+            return loss, per_example_loss, logits, probabilities, predicted_labels
 
 
     # ---------------------------------------------------------------------------------------------------------------- #
@@ -573,31 +625,40 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
 
+        # version of combining probabilities: PRODUCT
+        if combo:
+            probabilities = tf.math.multiply(tf.math.multiply(probabilities, probabilities_c), probabilities_s)
+            log_probs = tf.math.log(probabilities)
+
         # Prediction
         one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
 
-        predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
+        if combo:
+            predicted_labels = tf.argmax(probabilities, axis=-1, output_type=tf.int32)
+        else:
+            predicted_labels = tf.argmax(log_probs, axis=-1, output_type=tf.int32)
+
 
         # Loss
         per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
         loss = tf.reduce_mean(per_example_loss)
 
-        tf.logging.info("logits_pos, shape = %s" % logits_pos.shape)  # (batch_size, 1)
-        tf.logging.info("logits_neg, shape = %s" % logits_neg.shape)  # (batch_size, 1)
-        tf.logging.info("logits, shape = %s" % logits.shape)  # (batch_size, num_labels)
-
-        tf.logging.info("probabilities, shape = %s" % probabilities.shape)  # (batch_size, num_labels)
-        tf.logging.info("log_probs, shape = %s" % log_probs.shape)  # (batch_size, num_labels)
-        tf.logging.info("one_hot_labels, shape = %s" % one_hot_labels.shape)  # (batch_size, num_labels)
-        tf.logging.info("predicted_labels, shape = %s" % predicted_labels.shape)  # (batch_size, )
-        tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
-        tf.logging.info("loss, shape = %s" % loss.shape)
+        # tf.logging.info("logits_pos, shape = %s" % logits_pos.shape)  # (batch_size, 1)
+        # tf.logging.info("logits_neg, shape = %s" % logits_neg.shape)  # (batch_size, 1)
+        # tf.logging.info("logits, shape = %s" % logits.shape)  # (batch_size, num_labels)
+        #
+        # tf.logging.info("probabilities, shape = %s" % probabilities.shape)  # (batch_size, num_labels)
+        # tf.logging.info("log_probs, shape = %s" % log_probs.shape)  # (batch_size, num_labels)
+        # tf.logging.info("one_hot_labels, shape = %s" % one_hot_labels.shape)  # (batch_size, num_labels)
+        # tf.logging.info("predicted_labels, shape = %s" % predicted_labels.shape)  # (batch_size, )
+        # tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
+        # tf.logging.info("loss, shape = %s" % loss.shape)
 
         return loss, per_example_loss, logits, probabilities, predicted_labels
 
 
 def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoint, num_labels, learning_rate,
-                     num_train_steps, num_warmup_steps):
+                     num_train_steps, num_warmup_steps, sentiment_only, commonsense_only, combo):
     """Returns `model_fn` closure for Estimator."""
 
     def model_fn(features, labels, mode, params):
@@ -635,7 +696,10 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
                                                                                        label_ids_pos, label_ids_neg,
                                                                                        sentiment_pos, sentiment_neg,
                                                                                        cs_dist_pos, cs_dist_neg,
-                                                                                       num_labels)
+                                                                                       num_labels,
+                                                                                       sentiment_only,
+                                                                                       commonsense_only,
+                                                                                       combo)
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialize
