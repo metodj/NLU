@@ -485,7 +485,8 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     sentiment_answer_neg = sentiment_neg[:, -1, 1:]  # (batch_size, 1, 3) or (batch_size, 3)
 
     hidden_state_dim_sent = 64
-    emb_dim_sent = tf.shape(sentiment_context)[2]  # should be 3
+    # emb_dim_sent = tf.shape(sentiment_context)[2]  # should be 3
+    emb_dim_sent = 3
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weights initialization Sentiment
@@ -521,7 +522,12 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
         logits_neg = tf.linalg.diag_part(
             tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
 
-        logits_s = tf.concat([logits_neg, logits_pos], axis=1)
+        print("------------------------ja------------------------------")
+        print(logits_neg.shape)
+        print(logits_pos.shape)
+
+        # logits_s = tf.concat([logits_neg, logits_pos], axis=1)
+        logits_s = tf.stack([logits_neg, logits_pos], axis=1)
 
         probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
 
@@ -548,7 +554,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             # tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
             # tf.logging.info("loss, shape = %s" % loss.shape)
 
-            return loss, per_example_loss, logits, probabilities, predicted_labels
+            return loss, per_example_loss, logits_s, probabilities_s, predicted_labels
 
 
     # ---------------------------------------------------------------------------------------------------------------- #
@@ -596,7 +602,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             # tf.logging.info("per_example_loss, shape = %s" % per_example_loss.shape)  # (batch_size, )
             # tf.logging.info("loss, shape = %s" % loss.shape)
 
-            return loss, per_example_loss, logits, probabilities, predicted_labels
+            return loss, per_example_loss, logits_c, probabilities_c, predicted_labels
 
 
     # ---------------------------------------------------------------------------------------------------------------- #
