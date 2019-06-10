@@ -1,6 +1,6 @@
 
 #XML
-.xml
+*.xml
 
 #idea
-.idea
+*.idea
