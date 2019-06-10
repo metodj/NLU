@@ -1,6 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
+import nltk
+
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
@@ -9,11 +13,10 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
     cols = list(df.columns)
 
     def pp_text_a(row):
-        text_a = ""
-        text_a = text_a + " " + row[cols.index("sentence1")]  # sentence1
-        text_a = text_a + " " + row[cols.index("sentence2")]  # sentence2
-        text_a = text_a + " " + row[cols.index("sentence3")]  # sentence3
-        text_a = text_a + " " + row[cols.index("sentence4")]  # sentence4
+        text_a = [row[cols.index("InputSentence1")], \
+                  row[cols.index("InputSentence2")], \
+                  row[cols.index("InputSentence3")], \
+                  row[cols.index("InputSentence4")]]
         return text_a
 
     def pp_text_b_pos(row):
@@ -26,8 +29,13 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
                           dtype=np.float32)
         return np_vec
 
-    def pp_common_sense(row):
-        return np.ones(shape=(4,), dtype=np.float32)
+    def pp_common_sense_pos(row):
+        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        return np.array(distance, dtype=np.float32)
+
+    def pp_common_sense_neg(row):
+        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        return np.array(distance, dtype=np.float32)
 
     # Positive samples (true)
     df_pos = pd.DataFrame()
@@ -51,8 +59,8 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
 
     # Common Sense
     if common_sense:
-        df_pos["cs_dist_pos"] = df_pos["text_a"].apply(pp_common_sense)
-        df_pos["cs_dist_neg"] = -df_pos["text_a"].apply(pp_common_sense)
+        df_pos["cs_dist_pos"] = df_pos.apply(pp_common_sense_pos, axis=1)
+        df_pos["cs_dist_neg"] = df_pos.apply(pp_common_sense_neg, axis=1)
 
     # Sort by index: positive - first, negative - second
     df_res = df_pos.set_index(["unique_id", "label"])\
@@ -66,11 +74,10 @@ def pp_data_val(df, sentiment=True, common_sense=True):
     cols = list(df.columns)
 
     def pp_text_a(row):
-        text_a = ""
-        text_a = text_a + " " + row[cols.index("InputSentence1")]  # sentence1
-        text_a = text_a + " " + row[cols.index("InputSentence2")]  # sentence2
-        text_a = text_a + " " + row[cols.index("InputSentence3")]  # sentence3
-        text_a = text_a + " " + row[cols.index("InputSentence4")]  # sentence4
+        text_a = [row[cols.index("InputSentence1")], \
+                  row[cols.index("InputSentence2")], \
+                  row[cols.index("InputSentence3")], \
+                  row[cols.index("InputSentence4")]]
         return text_a
 
     def pp_text_b_pos(row):
@@ -91,8 +98,13 @@ def pp_data_val(df, sentiment=True, common_sense=True):
                           dtype=np.float32)
         return np_vec
 
-    def pp_common_sense(row):
-        return np.ones(shape=(4,), dtype=np.float32)
+    def pp_common_sense_pos(row):
+        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        return np.array(distance, dtype=np.float32)
+
+    def pp_common_sense_neg(row):
+        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        return np.array(distance, dtype=np.float32)
 
     # Positive samples
     df_pos = pd.DataFrame()
@@ -114,8 +126,8 @@ def pp_data_val(df, sentiment=True, common_sense=True):
 
     # Common Sense
     if common_sense:
-        df_pos["cs_dist_pos"] = df_pos["text_a"].apply(pp_common_sense)
-        df_pos["cs_dist_neg"] = -df_pos["text_a"].apply(pp_common_sense)
+        df_pos["cs_dist_pos"] = df_pos.apply(pp_common_sense_pos, axis=1)
+        df_pos["cs_dist_neg"] = df_pos.apply(pp_common_sense_neg, axis=1)
 
     df_res = df_pos.set_index(["unique_id", "label"])\
         .sort_index(axis=0, ascending=False).reset_index(drop=False)
@@ -128,11 +140,10 @@ def pp_data_test(df, sentiment=True, common_sense=True):
     cols = list(df.columns)
 
     def pp_text_a(row):
-        text_a = ""
-        text_a = text_a + " " + row[cols.index("InputSentence1")]  # sentence1
-        text_a = text_a + " " + row[cols.index("InputSentence2")]  # sentence2
-        text_a = text_a + " " + row[cols.index("InputSentence3")]  # sentence3
-        text_a = text_a + " " + row[cols.index("InputSentence4")]  # sentence4
+        text_a = [row[cols.index("InputSentence1")], \
+                  row[cols.index("InputSentence2")], \
+                  row[cols.index("InputSentence3")], \
+                  row[cols.index("InputSentence4")]]
         return text_a
 
     def pp_sentiment(row):
@@ -141,8 +152,13 @@ def pp_data_test(df, sentiment=True, common_sense=True):
                           dtype=np.float32)
         return np_vec
 
-    def pp_common_sense(row):
-        return np.ones(shape=(4,), dtype=np.float32)
+    def pp_common_sense_pos(row):
+        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        return np.array(distance, dtype=np.float32)
+
+    def pp_common_sense_neg(row):
+        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        return np.array(distance, dtype=np.float32)
 
     # Positive samples
     df_pos = pd.DataFrame()
@@ -164,16 +180,90 @@ def pp_data_test(df, sentiment=True, common_sense=True):
 
     # Common Sense
     if common_sense:
-        df_pos["cs_dist_pos"] = df_pos["text_a"].apply(pp_common_sense)
-        df_pos["cs_dist_neg"] = -df_pos["text_a"].apply(pp_common_sense)
+        df_pos["cs_dist_pos"] = df_pos.apply(pp_common_sense_pos, axis=1)
+        df_pos["cs_dist_neg"] = df_pos.apply(pp_common_sense_neg, axis=1)
 
     df_res = df_pos
 
     return df_res
 
 
+# Tokenization
+# ------------
+
+def tokenize(sentence):
+    words = nltk.word_tokenize(sentence)
+    words = [w for w in words if w not in stoplist]
+
+    return words
+
+def stem(word):
+    stem = stemmer.stem(word)
+    return stem
+
+
+# Vectors
+# -------
+
+def compute_distance(S, e):
+    distance = []
+    for s_j in S:
+        distance_j = 0 
+        num = 0
+        for w in tokenize(e):
+            max_d = max(cosine_similarity(w, u) for u in tokenize(s_j) if stem(w) != stem(u))
+            num += 1
+
+            distance_j += max_d 
+        distance_j /= num
+        distance.append(distance_j)
+    return distance
+
+def get_vector(word):
+    if word in numberbatch_vectors:
+        return numberbatch_vectors[word]
+
+    return []
+
+def cosine_similarity(word1, word2):
+    vector1, vector2 = get_vector(word1), get_vector(word2)
+
+    # Abort if words not in list
+    if not vector1 or not vector2:
+        return 0
+
+    similarity = np.dot(vector1, vector2)/(np.linalg.norm(vector1) * np.linalg.norm(vector2))
+    return similarity
+
+# Files
+# -----
+
+def read_numberbatch(input_file):
+    vectors = {}
+    with open(input_file, encoding='latin-1') as file:
+        for (i, line) in enumerate(file):
+            if i == 0:
+                continue
+
+            line = line.split(" ")
+            word = line[0]
+            vector = [float(v) for v in line[1:]]
+            vectors[word] = vector
+    return vectors
+
+
 if __name__ == "__main__":
+    # Download NLTK content.
+    nltk.download('stopwords')
+    nltk.download('punkt')
+
+    stoplist = stopwords.words('english')
+    stemmer = SnowballStemmer('english')
+
     analyser = SentimentIntensityAnalyzer()
+
+    # Load numberbatch vectors.
+    numberbatch_vectors = read_numberbatch(os.path.join("..\\..\\numberbatch", "numberbatch-en.txt"))
 
     # Load data
     data_train_val = pd.read_csv(os.path.join("data", "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
