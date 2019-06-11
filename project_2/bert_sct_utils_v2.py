@@ -525,6 +525,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         # logits_s = tf.concat([logits_neg, logits_pos], axis=1)
         logits_s = tf.stack([logits_neg, logits_pos], axis=1)
+        # logits_s = tf.stack([logits_pos, logits_neg], axis=1)
 
         probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
 
@@ -539,6 +540,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             # Loss
             per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_s, axis=-1)
             loss = tf.reduce_mean(per_example_loss)
+
             #
             # tf.logging.info("logits_pos, shape = %s" % logits_pos.shape)  # (batch_size, 1)
             # tf.logging.info("logits_neg, shape = %s" % logits_neg.shape)  # (batch_size, 1)
@@ -563,8 +565,8 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     with tf.name_scope('commonsense'):
 
         output_weights_c = tf.get_variable("output_weights_c", [1,4],
-                                           initializer=tf.truncated_normal_initializer(stddev=0.02))
-        output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
+                                           initializer=tf.truncated_normal_initializer(stddev=0.02), trainable=True)
+        output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer(), trainable=True)
 
         logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
                                               output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
@@ -701,7 +703,36 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialize
+        # tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
+        # print(tvars_output_w_sent)
+        # print('ejga')
         tvars = tf.trainable_variables()
+        #
+        # print(type(tvars))
+        # for var in tvars:
+        #     if 'bert' not in var:
+        #         print(var)
+
+        # tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
+        # tvars_LSTM_w_sent_1 = tf.trainable_variables(scope='lstm_s')
+        # tvars_LSTM_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')  # don't know if necessary
+        #
+        # tvars_sent = tvars_output_w_sent + tvars_LSTM_w_sent_1 + tvars_LSTM_w_sent_2
+
+        tvars_sent = [var for var in tvars if 'module' not in var.name]
+        tvars = [var for var in tvars if 'module' in var.name]
+
+        # tvars_ = set(tvars)
+        # tvars_sent_ = set(tvars_sent)
+        #
+        # tvars_ = tvars_ - tvars_sent_
+        # tvars = list(tvars_)
+
+        print('----------------ja-------------')
+        print(tvars)
+        print('------------ne-----------------')
+        print(tvars_sent)
+        print('-----------banana---------------')
 
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
@@ -727,11 +758,6 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialize Sentiment
-        tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
-        tvars_LSTM_w_sent_1 = tf.trainable_variables(scope='lstm_s')
-        tvars_LSTM_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')  # don't know if necessary
-
-        tvars_sent = tvars_output_w_sent + tvars_LSTM_w_sent_1 + tvars_LSTM_w_sent_2
 
         initialized_variable_names_sent = {}
 
