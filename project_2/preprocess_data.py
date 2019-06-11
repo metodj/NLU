@@ -76,6 +76,9 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
     df_res = pd.concat([df_pos, df_neg], axis=0).set_index(["unique_id", "label"])\
         .sort_index(axis=0, ascending=False).reset_index(drop=False)
 
+    # Concatenate text_a for BERT processing.
+    df_res["text_a"] = df_res["text_a"].apply(" ".join)
+
     return df_res
 
 
@@ -152,6 +155,9 @@ def pp_data_val(df, sentiment=True, common_sense=True):
     df_res = pd.concat([df_pos, df_neg], axis=0).set_index(["unique_id", "label"])\
         .sort_index(axis=0, ascending=False).reset_index(drop=False)
 
+    # Concatenate text_a for BERT processing.
+    df_res["text_a"] = df_res["text_a"].apply(" ".join)
+
     return df_res
 
 
@@ -215,6 +221,9 @@ def pp_data_test(df, sentiment=True, common_sense=True):
 
     df_res = pd.concat([df_pos, df_neg], axis=0).set_index(["unique_id", "label"])\
         .sort_index(axis=0, ascending=False).reset_index(drop=False)
+
+    # Concatenate text_a for BERT processing.
+    df_res["text_a"] = df_res["text_a"].apply(" ".join)
 
     return df_res
 
