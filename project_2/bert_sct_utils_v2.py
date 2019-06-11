@@ -480,90 +480,91 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Sentiment
-    sentiment_context = sentiment_pos[:, 0:-1, 1:]  # (batch_size, 4, 3)
-    sentiment_answer_pos = sentiment_pos[:, -1, 1:]  # (batch_size, 1, 3)
-    sentiment_answer_neg = sentiment_neg[:, -1, 1:]  # (batch_size, 1, 3) or (batch_size, 3)
+    if combination:
+        sentiment_context = sentiment_pos[:, 0:-1, 1:]  # (batch_size, 4, 3)
+        sentiment_answer_pos = sentiment_pos[:, -1, 1:]  # (batch_size, 1, 3)
+        sentiment_answer_neg = sentiment_neg[:, -1, 1:]  # (batch_size, 1, 3) or (batch_size, 3)
 
-    hidden_state_dim_sent = 64
-    emb_dim_sent = 3
+        hidden_state_dim_sent = 64
+        emb_dim_sent = 3
 
-    # Weights initialization Sentiment
-    with tf.name_scope("weights_initialization_s"):
+        # Weights initialization Sentiment
+        with tf.name_scope("weights_initialization_s"):
 
-        output_weights_s = tf.get_variable("output_weights_s", shape=[hidden_state_dim_sent, emb_dim_sent],
-                                           initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
-        output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent,
-                                        initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
-
-        similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
+            output_weights_s = tf.get_variable("output_weights_s", shape=[hidden_state_dim_sent, emb_dim_sent],
+                                               initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
+            output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent,
                                             initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
 
-    with tf.name_scope('lstm_s'):
-        LSTM_s = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_state_dim_sent, name="lstm_cell_s")
-        initial_state_s = LSTM_s.zero_state(batch_size=batch_size, dtype=tf.float32)
+            similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
+                                                initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
 
-    with tf.name_scope('fine_tuning_story_cloze'):
-        lstm_output_sent, (_, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
-                                                             initial_state=initial_state_s,
-                                                             dtype=tf.float32)
+        with tf.name_scope('lstm_s'):
+            LSTM_s = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_state_dim_sent, name="lstm_cell_s")
+            initial_state_s = LSTM_s.zero_state(batch_size=batch_size, dtype=tf.float32)
 
-        e_p = tf.nn.softmax(tf.matmul(state_h_s, output_weights_s) + output_bias_s)  # (batch_size, 3)
+        with tf.name_scope('fine_tuning_story_cloze'):
+            lstm_output_sent, (_, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
+                                                                 initial_state=initial_state_s,
+                                                                 dtype=tf.float32)
 
-        logits_pos = tf.linalg.diag_part(
-            tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_pos, transpose_b=True))
+            e_p = tf.nn.softmax(tf.matmul(state_h_s, output_weights_s) + output_bias_s)  # (batch_size, 3)
 
-        logits_neg = tf.linalg.diag_part(
-            tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
+            logits_pos = tf.linalg.diag_part(
+                tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_pos, transpose_b=True))
 
-        logits_s = tf.concat([logits_neg, logits_pos], axis=1)
-        probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
+            logits_neg = tf.linalg.diag_part(
+                tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
 
-        if sentiment_only:
-            log_probs_s = tf.nn.log_softmax(logits_s, axis=-1)
+            logits_s = tf.stack([logits_neg, logits_pos], axis=1)
+            probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
 
-            # Prediction
-            one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
+            if sentiment_only:
+                log_probs_s = tf.nn.log_softmax(logits_s, axis=-1)
 
-            predicted_labels = tf.argmax(log_probs_s, axis=-1, output_type=tf.int32)
+                # Prediction
+                one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
 
-            # Loss
-            per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_s, axis=-1)
-            loss = tf.reduce_mean(per_example_loss)
+                predicted_labels = tf.argmax(log_probs_s, axis=-1, output_type=tf.int32)
 
-            return loss, per_example_loss, logits_s, probabilities_s, predicted_labels
+                # Loss
+                per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_s, axis=-1)
+                loss = tf.reduce_mean(per_example_loss)
 
-    # ---------------------------------------------------------------------------------------------------------------- #
-    # Common Sense
+                return loss, per_example_loss, logits_s, probabilities_s, predicted_labels
 
-    with tf.name_scope('commonsense'):
+        # ---------------------------------------------------------------------------------------------------------------- #
+        # Common Sense
 
-        output_weights_c = tf.get_variable("output_weights_c", [1,4],
-                                           initializer=tf.truncated_normal_initializer(stddev=0.02))
-        output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
+        with tf.name_scope('commonsense'):
 
-        logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
-                                              output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
-        logits_neg_c = tf.nn.bias_add(tf.matmul(cs_dist_neg,
-                                              output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+            output_weights_c = tf.get_variable("output_weights_c", [1,4],
+                                               initializer=tf.truncated_normal_initializer(stddev=0.02))
+            output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
 
-        logits_c = tf.concat([logits_neg_c, logits_pos_c], axis=1)
+            logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
+                                                  output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+            logits_neg_c = tf.nn.bias_add(tf.matmul(cs_dist_neg,
+                                                  output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
 
-        probabilities_c = tf.nn.softmax(logits_c, axis=-1)
+            logits_c = tf.stack([logits_neg_c, logits_pos_c], axis=1)
 
-        if commonsense_only:
+            probabilities_c = tf.nn.softmax(logits_c, axis=-1)
 
-            log_probs_c = tf.nn.log_softmax(logits_c, axis=-1)
+            if commonsense_only:
 
-            # Prediction
-            one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
+                log_probs_c = tf.nn.log_softmax(logits_c, axis=-1)
 
-            predicted_labels = tf.argmax(log_probs_c, axis=-1, output_type=tf.int32)
+                # Prediction
+                one_hot_labels = tf.one_hot(labels_pos, depth=num_labels, dtype=tf.float32)
 
-            # Loss
-            per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_c, axis=-1)
-            loss = tf.reduce_mean(per_example_loss)
+                predicted_labels = tf.argmax(log_probs_c, axis=-1, output_type=tf.int32)
 
-            return loss, per_example_loss, logits_c, probabilities_c, predicted_labels
+                # Loss
+                per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs_c, axis=-1)
+                loss = tf.reduce_mean(per_example_loss)
+
+                return loss, per_example_loss, logits_c, probabilities_c, predicted_labels
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # Weight initialization

@@ -30,11 +30,17 @@ def pp_data_train(df, method="random", sentiment=True, common_sense=True):
         return np_vec
 
     def pp_common_sense_pos(row):
-        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_pos"])
+        else:
+            distance = [1.0, 1.0, 1.0, 1.0]
         return np.array(distance, dtype=np.float32)
 
     def pp_common_sense_neg(row):
-        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_neg"])
+        else:
+            distance = [-1.0, -1.0, -1.0, -1.0]
         return np.array(distance, dtype=np.float32)
 
     # Positive samples (true)
@@ -102,11 +108,17 @@ def pp_data_val(df, sentiment=True, common_sense=True):
         return np_vec
 
     def pp_common_sense_pos(row):
-        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_pos"])
+        else:
+            distance = [1.0, 1.0, 1.0, 1.0]
         return np.array(distance, dtype=np.float32)
 
     def pp_common_sense_neg(row):
-        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_neg"])
+        else:
+            distance = [-1.0, -1.0, -1.0, -1.0]
         return np.array(distance, dtype=np.float32)
 
     # Positive samples
@@ -159,11 +171,17 @@ def pp_data_test(df, sentiment=True, common_sense=True):
         return np_vec
 
     def pp_common_sense_pos(row):
-        distance = compute_distance(row["text_a"], row["text_b_pos"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_pos"])
+        else:
+            distance = [1.0, 1.0, 1.0, 1.0]
         return np.array(distance, dtype=np.float32)
 
     def pp_common_sense_neg(row):
-        distance = compute_distance(row["text_a"], row["text_b_neg"])
+        if common_sense:
+            distance = compute_distance(row["text_a"], row["text_b_neg"])
+        else:
+            distance = [-1.0, -1.0, -1.0, -1.0]
         return np.array(distance, dtype=np.float32)
 
     # Positive samples
@@ -257,6 +275,8 @@ if __name__ == "__main__":
     nltk.download('stopwords')
     nltk.download('punkt')
 
+    CS = True
+
     stoplist = stopwords.words('english')
     stemmer = SnowballStemmer('english')
 
@@ -274,9 +294,9 @@ if __name__ == "__main__":
     data_test = pd.read_csv(os.path.join("data", "test-stories.csv"))
 
     # Training set: train + validation (fine-tuning)
-    df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
+    df_train = pp_data_train(data_train, sentiment=True, common_sense=CS)
 
-    df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
+    df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=CS)
 
     df_train = pd.concat([df_train, df_train_val, df_train_val, df_train_val], axis=0)
 
@@ -284,10 +304,10 @@ if __name__ == "__main__":
     # df_train = df_train_val
 
     # Validation set
-    df_val = pp_data_val(data_val, sentiment=True, common_sense=True)
+    df_val = pp_data_val(data_val, sentiment=True, common_sense=CS)
 
     # Test set (no label)
-    df_test = pp_data_test(data_test, sentiment=True, common_sense=True)
+    df_test = pp_data_test(data_test, sentiment=True, common_sense=CS)
 
     df_train.to_csv(os.path.join("data_pp", "sct_v2.train.tsv"), sep="\t", header=True, index=False)
     df_val.to_csv(os.path.join("data_pp", "sct_v2.validation.tsv"), sep="\t", header=True, index=False)
