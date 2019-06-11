@@ -496,7 +496,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
                                            initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
         output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent,
                                         initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
-
+    with tf.name_scope("similarity_matrix_s"):
         similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
                                             initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
 
@@ -703,36 +703,10 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialize
-        # tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
-        # print(tvars_output_w_sent)
-        # print('ejga')
         tvars = tf.trainable_variables()
-        #
-        # print(type(tvars))
-        # for var in tvars:
-        #     if 'bert' not in var:
-        #         print(var)
-
-        # tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
-        # tvars_LSTM_w_sent_1 = tf.trainable_variables(scope='lstm_s')
-        # tvars_LSTM_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')  # don't know if necessary
-        #
-        # tvars_sent = tvars_output_w_sent + tvars_LSTM_w_sent_1 + tvars_LSTM_w_sent_2
 
         tvars_sent = [var for var in tvars if 'module' not in var.name]
         tvars = [var for var in tvars if 'module' in var.name]
-
-        # tvars_ = set(tvars)
-        # tvars_sent_ = set(tvars_sent)
-        #
-        # tvars_ = tvars_ - tvars_sent_
-        # tvars = list(tvars_)
-
-        print('----------------ja-------------')
-        print(tvars)
-        print('------------ne-----------------')
-        print(tvars_sent)
-        print('-----------banana---------------')
 
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
