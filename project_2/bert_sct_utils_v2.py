@@ -499,17 +499,20 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             output_bias_s = tf.get_variable("output_bias_s", shape=emb_dim_sent,
                                             initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
 
+        with tf.name_scope("similarity_matrix_s"):
             similarity_matrix = tf.get_variable("similarity_matrix", shape=[emb_dim_sent, emb_dim_sent],
                                                 initializer=tf.contrib.layers.xavier_initializer(), trainable=True)
 
         with tf.name_scope('lstm_s'):
+
             LSTM_s = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_state_dim_sent, name="lstm_cell_s")
+
             initial_state_s = LSTM_s.zero_state(batch_size=batch_size, dtype=tf.float32)
 
         with tf.name_scope('fine_tuning_story_cloze'):
-            lstm_output_sent, (_, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
-                                                                 initial_state=initial_state_s,
-                                                                 dtype=tf.float32)
+            lstm_output_sent, (state_c_s, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
+                                                                         initial_state=initial_state_s,
+                                                                         dtype=tf.float32)
 
             e_p = tf.nn.softmax(tf.matmul(state_h_s, output_weights_s) + output_bias_s)  # (batch_size, 3)
 
@@ -520,6 +523,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
                 tf.matmul(tf.matmul(a=e_p, b=similarity_matrix), sentiment_answer_neg, transpose_b=True))
 
             logits_s = tf.stack([logits_neg, logits_pos], axis=1)
+
             probabilities_s = tf.nn.softmax(logits_s, axis=-1)  # (batch_size, 2)
 
             if sentiment_only:
@@ -538,7 +542,6 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         # ------------------------------------------------------------------------------------------------------------ #
         # Common Sense
-
         with tf.name_scope('commonsense'):
 
             output_weights_c = tf.get_variable("output_weights_c", [1, 4],
@@ -546,16 +549,17 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
 
             logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
-                                                    output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+                                                    output_weights_c, transpose_b=True),
+                                          output_bias_c)  # (batch_size, 1)
             logits_neg_c = tf.nn.bias_add(tf.matmul(cs_dist_neg,
-                                                    output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+                                                    output_weights_c, transpose_b=True),
+                                          output_bias_c)  # (batch_size, 1)
 
-            logits_c = tf.stack([logits_neg_c, logits_pos_c], axis=1)
+            logits_c = tf.concat([logits_neg_c, logits_pos_c], axis=1)
 
             probabilities_c = tf.nn.softmax(logits_c, axis=-1)
 
             if commonsense_only:
-
                 log_probs_c = tf.nn.log_softmax(logits_c, axis=-1)
 
                 # Prediction
@@ -660,6 +664,9 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         # Initialize
         tvars = tf.trainable_variables()
 
+        tvars_sent = [var for var in tvars if 'module' not in var.name]
+        tvars = [var for var in tvars if 'module' in var.name]
+
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")
             for var in tvars:
@@ -686,13 +693,8 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         # ------------------------------------------------------------------------------------------------------------ #
         # Initialize Sentiment
         if combination or sentiment_only:
-            tvars_output_w_sent = tf.trainable_variables(scope='weights_initialization_s')
-            tvars_lstm_w_sent_1 = tf.trainable_variables(scope='lstm_s')
-            tvars_lstm_w_sent_2 = tf.trainable_variables(scope='fine_tuning_story_cloze')  # don't know if necessary
-
-            tvars_sent = tvars_output_w_sent + tvars_lstm_w_sent_1 + tvars_lstm_w_sent_2
-
             initialized_variable_names_sent = {}
+
             if init_checkpoint_sent:
                 (assignment_map_sent, initialized_variable_names_sent) = modeling.get_assignment_map_from_checkpoint(
                     tvars_sent, init_checkpoint_sent)
@@ -748,3 +750,4 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         return output_spec
 
     return model_fn
+
