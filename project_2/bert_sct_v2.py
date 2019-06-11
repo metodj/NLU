@@ -22,11 +22,17 @@ flags.DEFINE_string("bert_model_hub", None, "Pretrained BERT. (default)")
 flags.DEFINE_string("bert_dir", None, "Local directory of pretrained BERT.")
 flags.DEFINE_bool("bert_trainable", False, "Whether BERT weights are trainable.")
 flags.DEFINE_string("init_checkpoint", None, "Initial checkpoint of BERT.")
+flags.DEFINE_string("init_checkpoint_sent", None, "Initial checkpoint of pre-trained sentiment model.")
 
 # Training or evaluation
 flags.DEFINE_bool("do_train", False, "Whether to run training.")
 flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 flags.DEFINE_bool("do_predict", False, "Whether to run the model in inference mode on the test set.")
+
+# Model selection
+flags.DEFINE_bool("sentiment_only", False, "sentiment only")
+flags.DEFINE_bool("commonsense_only", False, "commonsense only")
+flags.DEFINE_bool("combination", False, "combination")
 
 flags.DEFINE_integer("max_seq_length", 400, "Max. length after tokenization. If shorter padded, else truncated.")
 flags.DEFINE_integer("batch_size", 4, "Total batch size for training.")
@@ -80,10 +86,15 @@ def main(_):
                                 bert_trainable=FLAGS.bert_trainable,
                                 bert_config=bert_config,
                                 init_checkpoint=FLAGS.init_checkpoint,
+                                init_checkpoint_sent=FLAGS.init_checkpoint_sent,
                                 num_labels=len(label_list),
                                 learning_rate=FLAGS.learning_rate,
                                 num_train_steps=num_train_steps,
-                                num_warmup_steps=num_warmup_steps)
+                                num_warmup_steps=num_warmup_steps,
+                                sentiment_only=FLAGS.sentiment_only,
+                                commonsense_only=FLAGS.commonsense_only,
+                                combination=FLAGS.combination,
+                                )
 
     params = {
         "batch_size": FLAGS.batch_size,
