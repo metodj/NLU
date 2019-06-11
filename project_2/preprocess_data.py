@@ -290,13 +290,17 @@ if __name__ == "__main__":
     nltk.download('stopwords')
     nltk.download('punkt')
 
+    CS = True
+
     stoplist = stopwords.words('english')
     stemmer = SnowballStemmer('english')
 
     analyser = SentimentIntensityAnalyzer()
 
     # Load numberbatch vectors.
-    numberbatch_vectors = read_numberbatch(os.path.join("C:/Users/roksi/numberbatch-en-17.06", "numberbatch-en.txt"))
+    if CS:
+        numberbatch_vectors = read_numberbatch(os.path.join("C:/Users/roksi/numberbatch-en-17.06", "numberbatch-en.txt"))
+        print("numberbatch loaded")
 
     # Load data
     data_train_val = pd.read_csv(os.path.join("data", "cloze_test_val__spring2016 - cloze_test_ALL_val.csv"))
@@ -309,9 +313,11 @@ if __name__ == "__main__":
     df_train = pp_data_train(data_train, sentiment=True, common_sense=True)
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=True)
 
+    # TS II
     # df_train = pd.concat([df_train, df_train_val, df_train_val, df_train_val], axis=0)
 
     df_train_tmp = df_train.copy()
+    # TS IV
     df_train = df_train_val
 
     # Validation set
@@ -327,6 +333,7 @@ if __name__ == "__main__":
     if not os.path.exists("data_pp_test"):
         os.makedirs("data_pp_test")
 
+    # TS III
     df_train_test = pd.concat([df_train_tmp.iloc[0:data_train_val.shape[0]],
                                df_train.iloc[-data_train_val.shape[0]:]], axis=0)
 

@@ -479,8 +479,11 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
     batch_size = tf.shape(output_layer_pos)[0]
 
     # ---------------------------------------------------------------------------------------------------------------- #
-    # Sentiment
-    if combination:
+    # Sentiment and Common Sense
+    if combination or sentiment_only or commonsense_only:
+
+        # ------------------------------------------------------------------------------------------------------------ #
+        # Sentiment
         sentiment_context = sentiment_pos[:, 0:-1, 1:]  # (batch_size, 4, 3)
         sentiment_answer_pos = sentiment_pos[:, -1, 1:]  # (batch_size, 1, 3)
         sentiment_answer_neg = sentiment_neg[:, -1, 1:]  # (batch_size, 1, 3) or (batch_size, 3)
@@ -533,7 +536,7 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
                 return loss, per_example_loss, logits_s, probabilities_s, predicted_labels
 
-        # ---------------------------------------------------------------------------------------------------------------- #
+        # ------------------------------------------------------------------------------------------------------------ #
         # Common Sense
 
         with tf.name_scope('commonsense'):
