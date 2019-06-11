@@ -237,3 +237,25 @@ Local directory hierarchy.
     * Eval: ```10_04-38eval_results.txt```
     * Test: ```10_04-38test_results.tsv``` 
 
+#### Experiment G (FINAL)
+
+* Parameters
+    * BERT initialization: ```https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1```
+    * Data: ```data_pp_test/``` TS3     
+    * Classification: Relative
+    * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
+    * Sentiment: NO
+    * Common sense: NO
+    * Main: ```bert_sct_v2.py```
+
+* Performance
+    * eval_accuracy = 0.87607294
+    * eval_loss = 1.811894
+    * global_step = 1403
+    * loss = 1.811894
+    * precision = 1.0
+    * recall = 0.87607294
+
+* Output
+    * Eval: ```11_15-49eval_results.txt```
+    * Test: ```11_15-49test_results.tsv``` 

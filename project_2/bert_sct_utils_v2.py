@@ -510,9 +510,9 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
             initial_state_s = LSTM_s.zero_state(batch_size=batch_size, dtype=tf.float32)
 
         with tf.name_scope('fine_tuning_story_cloze'):
-            lstm_output_sent, (state_c_s, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
-                                                                         initial_state=initial_state_s,
-                                                                         dtype=tf.float32)
+            _, (_, state_h_s) = tf.nn.dynamic_rnn(cell=LSTM_s, inputs=sentiment_context,
+                                                  initial_state=initial_state_s,
+                                                  dtype=tf.float32)
 
             e_p = tf.nn.softmax(tf.matmul(state_h_s, output_weights_s) + output_bias_s)  # (batch_size, 3)
 
