@@ -541,14 +541,14 @@ def create_model(bert_model_hub, bert_trainable, bert_config, is_training,
 
         with tf.name_scope('commonsense'):
 
-            output_weights_c = tf.get_variable("output_weights_c", [1,4],
+            output_weights_c = tf.get_variable("output_weights_c", [1, 4],
                                                initializer=tf.truncated_normal_initializer(stddev=0.02))
             output_bias_c = tf.get_variable("output_bias_c", [1], initializer=tf.zeros_initializer())
 
             logits_pos_c = tf.nn.bias_add(tf.matmul(cs_dist_pos,
-                                                  output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+                                                    output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
             logits_neg_c = tf.nn.bias_add(tf.matmul(cs_dist_neg,
-                                                  output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
+                                                    output_weights_c, transpose_b=True), output_bias_c)  # (batch_size, 1)
 
             logits_c = tf.stack([logits_neg_c, logits_pos_c], axis=1)
 
