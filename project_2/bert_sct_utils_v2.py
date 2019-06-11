@@ -665,7 +665,7 @@ def model_fn_builder(bert_model_hub, bert_trainable, bert_config, init_checkpoin
         tvars = tf.trainable_variables()
 
         tvars_sent = [var for var in tvars if 'module' not in var.name]
-        tvars = [var for var in tvars if 'module' in var.name]
+        tvars = [var for var in tvars if 'module' in var.name or "_c" in var.name]
 
         if bert_model_hub:
             tf.logging.info("**** Trainable Variables ****")

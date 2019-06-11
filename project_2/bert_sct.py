@@ -178,7 +178,8 @@ def main(_):
 
                 probs = ["{0:.4f}".format(class_probability) for class_probability in probabilities]
 
-                output_line = "\t".join(probs) + "\t" + predict_label + "\n"
+                # output_line = "\t".join(probs) + "\t" + predict_label + "\n"
+                output_line = predict_label + "\n"
                 writer.write(output_line)
                 num_written_lines += 1
 

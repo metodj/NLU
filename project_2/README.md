@@ -244,8 +244,8 @@ Local directory hierarchy.
     * Data: ```data_pp_test/``` TS3     
     * Classification: Relative
     * ```num_epochs = 3.0, batch_size = 8, max_seq_length = 400, learning_rate = 0.5, warmup_proportion = 0.1```
-    * Sentiment: NO
-    * Common sense: NO
+    * Sentiment: YES
+    * Common sense: YES
     * Main: ```bert_sct_v2.py```
 
 * Performance
