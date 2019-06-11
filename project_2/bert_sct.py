@@ -20,7 +20,7 @@ flags.DEFINE_string("results_dir", "./results/", "The output directory for resul
 # BERT
 flags.DEFINE_string("bert_model_hub", None, "Pretrained BERT. (default)")
 flags.DEFINE_string("bert_dir", None, "Local directory of pretrained BERT.")
-flags.DEFINE_bool("bert_trainable", False, "Whether BERT weights are trainable.")
+flags.DEFINE_bool("bert_trainable", True, "Whether BERT weights are trainable.")
 flags.DEFINE_string("init_checkpoint", None, "Initial checkpoint of BERT.")
 
 # Training or evaluation
@@ -29,9 +29,9 @@ flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 flags.DEFINE_bool("do_predict", False, "Whether to run the model in inference mode on the test set.")
 
 flags.DEFINE_integer("max_seq_length", 400, "Max. length after tokenization. If shorter padded, else truncated.")
-flags.DEFINE_integer("batch_size", 4, "Total batch size for training.")
-flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
-flags.DEFINE_float("num_train_epochs", 1.0, "Total number of training epochs to perform.")
+flags.DEFINE_integer("batch_size", 8, "Total batch size for training.")
+flags.DEFINE_float("learning_rate", 2e-5, "The initial learning rate for Adam.")
+flags.DEFINE_float("num_train_epochs", 3.0, "Total number of training epochs to perform.")
 flags.DEFINE_float("warmup_proportion", 0.1, "Proportion of training to perform linear learning rate warmup for.")
 
 
