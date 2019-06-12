@@ -11,7 +11,7 @@ setup(
         packages=find_packages(exclude=[]),
         python_requires='>=3.6',
         install_requires=[
-                'tensorflow-gpu==1.12.0',
+                'tensorflow-gpu==1.13.1',
                 'numpy',
                 'pandas',
                 'bert-tensorflow==1.0.1',

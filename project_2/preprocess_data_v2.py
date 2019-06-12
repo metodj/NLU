@@ -299,10 +299,14 @@ if __name__ == "__main__":
 
     df_train_val = pp_data_val(data_train_val, sentiment=True, common_sense=CS)
 
+    df_train_tmp = df_train.copy()
+
+    # TS I
+    # df_train = df_train
+
     # TS II
     # df_train = pd.concat([df_train, df_train_val, df_train_val, df_train_val], axis=0)
 
-    df_train_tmp = df_train.copy()
     # TS IV
     df_train = df_train_val
 
