@@ -1,4 +1,7 @@
 ## Natural Language Understanding
+Semester project for course Natural Language Understanding at ETH. School year 2018/2019.
+
+Project report can be found [here](https://github.com/metodj/NLU/blob/master/project_2/NLU_project_2_report.pdf).
 ## Project 2
 
 
